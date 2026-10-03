@@ -39,7 +39,15 @@ vi.mock('vue-router', () => ({
 }))
 
 vi.mock('frappe-ui', () => ({
-	createResource: () => ({ data: outline, reload: vi.fn() }),
+	createResource: () => ({ data: outline, reload: vi.fn(), error: null }),
+	// The sidebar's Next control is a Button, so the mock has to carry one. A stub
+	// rather than the real component keeps this test about the lesson list, where the
+	// assertions on locked rows live.
+	Button: {
+		props: ['disabled', 'variant', 'size'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot name="prefix"/><slot/><slot name="suffix"/></button>',
+	},
 }))
 
 vi.stubGlobal('__', (s: string) => s)

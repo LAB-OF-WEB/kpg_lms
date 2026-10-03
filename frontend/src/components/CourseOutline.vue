@@ -74,17 +74,43 @@
 				</template>
 			</Draggable>
 		</div>
+
+		<!-- Same advance gesture as the lesson sidebar, for the course page. Not shown in
+		     the editor or the inline-select contexts: there the outline is a picker or an
+		     authoring surface, and a Next that navigates away from it would be wrong. The
+		     !h-11 matches the sidebar's control, so the two read as the same action. -->
+		<div
+			v-if="!allowEdit && !inlineSelect && nextLesson"
+			class="mt-2 px-2"
+		>
+			<Button
+				variant="solid"
+				size="md"
+				class="w-full !h-11"
+				:disabled="Boolean(nextLesson.locked)"
+				@click="goToNextLesson"
+			>
+				<template #suffix>
+					<span class="lucide-chevron-right size-4 rtl:rotate-180" />
+				</template>
+				{{ __('Next') }}
+			</Button>
+			<p v-if="nextLesson.locked" class="mt-2 text-sm text-ink-gray-7 px-1">
+				{{ __('Complete the lessons above to continue.') }}
+			</p>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { Button, createResource, toast } from 'frappe-ui'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Draggable from 'vuedraggable'
 
 import ChapterRow from '@/components/ChapterRow.vue'
 import { openFormRoute } from '@/composables/useFormRoute'
+import { nextLessonToDo, outlineLessons } from '@/composables/useLessonOrder'
 import type { OutlineChapter, OutlineLesson, Resource } from '@/types'
 
 interface DraggableEvent {
@@ -165,6 +191,24 @@ const outline = createResource({
 	},
 	auto: Boolean(props.courseName),
 }) as Resource<OutlineChapter[] | null>
+
+// Absent while the outline is loading or after it failed: a Next with no destination is
+// worse than no Next. `getProgress` is what carries is_complete, so without it every
+// lesson looks unfinished and the control would send the learner back to lesson 1.
+const nextLesson = computed<OutlineLesson | null>(() => {
+	if (outline.error || !props.getProgress) return null
+	return nextLessonToDo(outlineLessons(outline.data as OutlineChapter[] | null))
+})
+
+function goToNextLesson() {
+	const lesson = nextLesson.value
+	if (!lesson || lesson.locked) return
+	const [chapterNumber, lessonNumber] = lesson.number.split('-')
+	router.push({
+		name: 'Lesson',
+		params: { courseName: props.courseName, chapterNumber, lessonNumber },
+	})
+}
 
 watch(
 	() => props.courseName,

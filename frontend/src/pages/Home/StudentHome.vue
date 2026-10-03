@@ -101,7 +101,7 @@
 					:key="course.name"
 					:to="{ name: 'CourseDetail', params: { courseName: course.name } }"
 				>
-					<CourseCard :course="course" />
+					<CourseCard :course="course" show-action />
 				</router-link>
 			</div>
 		</div>

@@ -74,7 +74,7 @@
 			<router-link
 				:to="{ name: 'CourseDetail', params: { courseName: row.name } }"
 			>
-				<CourseCard :course="row" />
+				<CourseCard :course="row" show-action />
 			</router-link>
 		</template>
 	</ListPage>

@@ -88,11 +88,19 @@
 				<template #item="{ element: lesson }">
 					<div
 						class="outline-lesson ps-8 py-2 pe-4 text-ink-gray-9"
-						:class="
+						:class="[
 							isActiveLesson(lesson.number)
 								? 'bg-surface-gray-3 rounded-md'
-								: ''
-						"
+								: '',
+							// Same completed fill as the lesson sidebar, and for the same
+							// reason: in a long outline the tick alone is easy to miss. Declared
+							// after the active row so a lesson that is both finished and open
+							// keeps the active row's darker ink on top of the tint. A locked
+							// lesson is never filled -- its opacity already reads as unavailable.
+							isLessonComplete(lesson) && !lesson.locked
+								? 'bg-surface-green-2'
+								: '',
+						]"
 					>
 						<component
 							:is="inlineSelect || lesson.locked ? 'div' : 'router-link'"
@@ -179,6 +187,7 @@ import Draggable from 'vuedraggable'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { RouteLocationRaw } from 'vue-router'
+import { isLessonComplete } from '@/composables/useLessonOrder'
 import type { OutlineChapter, OutlineLesson, SessionUser } from '@/types'
 
 interface DraggableEvent {

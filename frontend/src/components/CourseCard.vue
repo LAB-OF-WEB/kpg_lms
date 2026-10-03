@@ -100,9 +100,60 @@
 				:progress="course.membership.progress"
 			/>
 
-			<div v-if="user && course.membership" class="text-sm mt-2 mb-4">
-				{{ Math.ceil(course.membership.progress) }}% {{ __('completed') }}
-			</div>
+		<div
+			v-if="user && course.membership"
+			class="text-sm mt-2 mb-4"
+		>
+			{{ Math.ceil(course.membership.progress) }}% {{ __('completed') }}
+		</div>
+
+		<!-- The one action this card owns. Opt-in per call site (see `showAction`), so
+		     the six surfaces that render a card do not each grow a learner CTA: an
+		     instructor on their own course and a program listing both have no business
+		     showing "Start Course". Sits above the instructor/price row so it reads as
+		     the card's primary control rather than as another metadata chip.
+
+		     `.prevent` is load-bearing, not defensive. The card is wrapped in a
+		     router-link on the surfaces that opt in, and `@click.stop` alone does NOT
+		     stop that navigation: the browser follows the anchor's href as the default
+		     action of any click inside it, so the learner lands on the course page
+		     instead of the lesson and the action looks broken. `.stop` keeps the
+		     card link's own handler out of the way, `.prevent` cancels the href. -->
+		<div v-if="actionState !== 'none'" class="mb-4">
+			<Badge
+				v-if="actionState === 'completed'"
+				theme="green"
+				size="lg"
+				class="w-full justify-center"
+			>
+				<template #prefix>
+					<span class="lucide-circle-check size-4" />
+				</template>
+				{{ __('Completed') }}
+			</Badge>
+			<Button
+				v-else
+				variant="solid"
+				size="md"
+				class="w-full !h-11"
+				:loading="starting"
+				@click.stop.prevent="onAction"
+			>
+				<template #prefix>
+					<span
+						:class="
+							actionState === 'continue'
+								? 'lucide-book-text size-4'
+								: 'lucide-play size-4'
+						"
+					/>
+				</template>
+				{{
+					actionState === 'continue' ? __('Continue Course') : __('Start Course')
+				}}
+			</Button>
+		</div>
+
 
 			<div class="flex items-center justify-between mt-auto">
 				<div class="flex avatar-group overlap">
@@ -137,27 +188,133 @@
 </template>
 <script setup>
 import { sessionStore } from '@/stores/session'
-import { Tooltip } from 'frappe-ui'
+import { Badge, Button, Tooltip, call, toast } from 'frappe-ui'
 import { formatAmount, formatRating } from '@/utils'
-import { theme } from '@/utils/theme'
-import { computed, watch } from 'vue'
+import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import CourseInstructors from '@/components/CourseInstructors.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import { canAutoEnroll, resolveCardAction } from '@/composables/useCardAction'
 
-const { user } = sessionStore()
+// storeToRefs keeps `user` a ref, so the card re-renders when the session resolves.
+// The session is read from a cookie at setup and can arrive after the first paint, and a
+// destructured value would freeze on whatever it was then -- leaving the action missing
+// for a signed-in learner until the page was reloaded.
+const { user } = storeToRefs(sessionStore())
+const router = useRouter()
 
 const props = defineProps({
 	course: {
 		type: Object,
 		default: null,
 	},
+	// Off by default, so a new call site has to opt in deliberately rather than
+	// inherit a learner CTA on a surface that should not have one.
+	showAction: {
+		type: Boolean,
+		default: false,
+	},
 })
+
+const starting = ref(false)
 
 const gradientColor = computed(() => {
 	let color = props.course.card_gradient?.toLowerCase() || 'blue'
 	return `linear-gradient(to top right, black, var(--${color}-400))`
 })
+
+// A guest cannot enrol, so a card with no signed-in user has no action to show
+// even on a surface that asked for one. The membership object is the only
+// evidence of enrolment on this payload, so its absence is "not enrolled".
+const membership = computed(() => props.course?.membership ?? null)
+
+// `user` is a ref (see storeToRefs above), so it is read with .value and stays reactive.
+const actionState = computed(() => {
+	if (!props.showAction || !user.value) return 'none'
+	return resolveCardAction({
+		progress: membership.value?.progress,
+		paidCourse: Boolean(props.course?.paid_course),
+		disableSelfLearning: Boolean(props.course?.disable_self_learning),
+	})
+})
+
+// Enrol, then open the first lesson. A paid or self-learning-disabled course cannot
+// be auto-enrolled into, so it routes elsewhere instead: billing for the one, and a
+// notice for the other, which is what the course page says for the same course.
+async function onAction() {
+	if (starting.value) return
+	const courseName = props.course?.name
+	if (!courseName) return
+
+	if (membership.value) {
+		router.push(lessonRoute(membership.value.current_lesson_index))
+		return
+	}
+
+	if (props.course.paid_course) {
+		router.push({ name: 'Billing', params: { type: 'course', name: courseName } })
+		return
+	}
+
+	if (
+		!canAutoEnroll({
+			paidCourse: Boolean(props.course.paid_course),
+			disableSelfLearning: Boolean(props.course.disable_self_learning),
+		})
+	) {
+		// Not an error: the course is deliberately closed to self-enrolment, and the
+		// learner needs to reach whoever administers it rather than be left guessing.
+		toast.warning(
+			__(
+				'You cannot enroll in this course as self-learning is disabled. Please contact the Administrator.'
+			)
+		)
+		return
+	}
+
+	starting.value = true
+	try {
+		// The generic insert rather than a bespoke endpoint: it goes through the
+		// controller, so validate_course_enrollment_eligibility still runs and a course
+		// closed to this learner is refused by the same rule that governs the form.
+		await call('frappe.client.insert', {
+			doc: { doctype: 'LMS Enrollment', course: courseName, member: user.value },
+		})
+		// The listing was fetched before this enrolment existed, so the card still reads
+		// as unenrolled; drop the cached page or the card would offer to start again.
+		clearListCache()
+		toast.success(__('You have been enrolled in this course'))
+		router.push(lessonRoute('1-1'))
+	} catch (err) {
+		// No navigation on failure: landing on a lesson for an enrolment that does not
+		// exist would strand the learner on a page they cannot read past.
+		const message = typeof err === 'string' ? err : (err?.messages?.[0] ?? 'Error')
+		toast.warning(__(message))
+	} finally {
+		starting.value = false
+	}
+}
+
+function lessonRoute(index) {
+	const [chapterNumber, lessonNumber] = String(index || '1-1').split('-')
+	return {
+		name: 'Lesson',
+		params: { courseName: props.course.name, chapterNumber, lessonNumber },
+	}
+}
+
+function clearListCache() {
+	// A no-op is fine here: the fallback is a reload on the next visit, and the
+	// alternative (keying the cache off enrolment) needs a server change this
+	// feature deliberately does not make.
+	try {
+		window.dispatchEvent(new CustomEvent('lms:courses-changed'))
+	} catch {
+		/* no listener; the stale card resolves itself on the next page load */
+	}
+}
 </script>
 <style>
 .course-card-pills {

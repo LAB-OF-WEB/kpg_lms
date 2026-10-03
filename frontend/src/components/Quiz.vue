@@ -273,8 +273,16 @@
 					</template>
 					<template v-else>
 						<div class="flex items-center justify-center gap-2">
+							<!-- The quiz entry point is the third action in this family (after the
+							     card action and the sidebar Next), and size="md" alone leaves it at
+							     32px against their 44px -- it read as a secondary control on a page
+							     where starting the quiz is the only thing to do. !h-11 and the wider
+							     padding put it on the same footing. The proctoring :disabled below
+							     is untouched: prominence must not weaken that precondition. -->
 							<Button
 								variant="solid"
+								size="md"
+								class="!h-11 !px-6 text-lg-medium"
 								:disabled="!!quiz.data.enable_proctoring && !cameraReady"
 								@click="startQuiz"
 							>

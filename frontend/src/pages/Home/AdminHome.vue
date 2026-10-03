@@ -145,6 +145,10 @@
 					:key="course.name"
 					:to="{ name: 'CourseDetail', params: { courseName: course.name } }"
 				>
+					<!-- No show-action here: this grid is the courses the signed-in user
+					     authored (get_created_courses), so a learner Start/Continue CTA would
+					     be aimed at the instructor persona this release rules out of scope.
+					     The learner-facing surfaces are the courses listing and StudentHome. -->
 					<CourseCard :course="course" />
 				</router-link>
 			</div>

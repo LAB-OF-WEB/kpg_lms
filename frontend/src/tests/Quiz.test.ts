@@ -91,6 +91,10 @@ vi.mock('frappe-ui', async () => {
 				label: { type: String, default: undefined },
 				theme: { type: String, default: 'gray' },
 				variant: { type: String, default: 'subtle' },
+				// `size` is carried through to the stub's own attribute so a test can assert
+				// on the size a control was rendered at. The real Button maps it to a
+				// height class; the classes themselves are covered by the Button tests.
+				size: { type: String, default: undefined },
 				disabled: { type: Boolean, default: false },
 			},
 			emits: ['click'],
@@ -102,8 +106,15 @@ vi.mock('frappe-ui', async () => {
 						: buttonClasses.variant
 					return map[key] ?? ''
 				},
+				// The caller's own `class` is forwarded too, because the height override
+				// that actually makes this control prominent lives there rather than in
+				// `size`. Without this a test can only see the size prop, which passed
+				// while the rendered button stayed at 32px.
+				extraClass(this: any) {
+					return (this as any).$attrs.class ?? ''
+				},
 			},
-			template: `<button type="button" :class="stateClasses" :disabled="disabled" :aria-label="label" @click="$emit('click')"><slot /></button>`,
+			template: `<button type="button" :class="[stateClasses, extraClass]" :disabled="disabled" :aria-label="label" :data-size="size" @click="$emit('click')"><slot /></button>`,
 		},
 		Badge: empty,
 		Checkbox: empty,
@@ -286,5 +297,81 @@ describe('Quiz in an author preview', () => {
 		} finally {
 			vi.useRealTimers()
 		}
+	})
+})
+
+/**
+ * The quiz entry point's prominence, and the proctoring precondition that must survive it.
+ *
+ * The card and sidebar actions in this release were made visually prominent, and the quiz
+ * entry is the third of that family. Making it prominent must not weaken the condition
+ * that stops a proctored quiz starting before the camera check passes.
+ */
+describe('the Start Quiz control', () => {
+	const startButton = (wrapper: VueWrapper<any>) =>
+		wrapper
+			.findAll('button')
+			.find((button) => button.text() === 'Start Quiz')
+
+	beforeEach(() => {
+		resourceState.response = quizResponse()
+	})
+
+	// The height override is the part that matters. size="md" maps to h-8 (32px) in
+	// frappe-ui, so a test that only checked the size prop passed while the button still
+	// rendered 12px shorter than the card action and the sidebar Next it is meant to match.
+	// These assert the class that carries the real height.
+	it('reaches the same 44px height as the card and sidebar actions', async () => {
+		const wrapper = mountQuiz()
+		await flushPromises()
+
+		expect(startButton(wrapper)?.classes()).toContain('!h-11')
+		wrapper.unmount()
+	})
+
+	it('is rendered at the prominent size, not the default one', async () => {
+		const wrapper = mountQuiz()
+		await flushPromises()
+
+		// size="md" rather than the component default ("sm" renders at 28px).
+		expect(startButton(wrapper)?.attributes('data-size')).toBe('md')
+		wrapper.unmount()
+	})
+
+	it('keeps the 44px height while disabled by proctoring', async () => {
+		resourceState.response = {
+			...quizResponse(),
+			quiz: { ...quizResponse().quiz, enable_proctoring: 1 },
+		}
+		const wrapper = mountQuiz()
+		await flushPromises()
+
+		// A prominent control must not shrink when it becomes unavailable.
+		expect(startButton(wrapper)?.classes()).toContain('!h-11')
+		expect(startButton(wrapper)?.attributes('disabled')).toBeDefined()
+		wrapper.unmount()
+	})
+
+	it('stays disabled until the camera check passes on a proctored quiz', async () => {
+		resourceState.response = {
+			...quizResponse(),
+			quiz: { ...quizResponse().quiz, enable_proctoring: 1 },
+		}
+		const wrapper = mountQuiz()
+		await flushPromises()
+
+		expect(startButton(wrapper)?.attributes('disabled')).toBeDefined()
+		expect(wrapper.text()).toContain(
+			'Position your face in the camera to enable the start button.'
+		)
+		wrapper.unmount()
+	})
+
+	it('is enabled on a quiz with no proctoring', async () => {
+		const wrapper = mountQuiz()
+		await flushPromises()
+
+		expect(startButton(wrapper)?.attributes('disabled')).toBeUndefined()
+		wrapper.unmount()
 	})
 })

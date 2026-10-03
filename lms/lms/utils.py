@@ -1262,6 +1262,8 @@ def update_course_filters(filters: dict) -> tuple:
 
 
 def get_enrollment_details(courses: list) -> list:
+	enrolled = []
+
 	for course in courses:
 		filters = {
 			"course": course.name,
@@ -1275,8 +1277,53 @@ def get_enrollment_details(courses: list) -> list:
 				["name", "course", "current_lesson", "progress", "member"],
 				as_dict=1,
 			)
+			enrolled.append(course)
+
+	_attach_resume_lesson_index(enrolled)
 
 	return courses
+
+
+def _attach_resume_lesson_index(courses: list) -> None:
+	"""Give each membership a `current_lesson_index`: the `{chapter}-{lesson}` pair the
+	course's "Continue" action should open.
+
+	`current_lesson` is a Link to Course Lesson, so it carries a docname and the SPA has no
+	way to turn that into a lesson URL. get_course_details has always resolved it for the
+	detail page (see its own block below); the listing never did, which is what left a card
+	unable to route anywhere on its own.
+
+	On a gated course the stored pointer is only a hint -- it was written under whatever
+	rules applied then, and the setting may have been switched off, or the chapters
+	reordered, since. get_lesson_gate is the same resolution the detail page uses: it keeps
+	the pointer when that lesson is still open and otherwise substitutes the first
+	incomplete one. Ungated, nothing can be locked, so the pointer needs no gate check and
+	only its position is resolved. Whether a course is gated is read once for the whole
+	page rather than per card, so a 24-card listing does not cost 24 extra queries.
+	"""
+	if not courses or frappe.session.user == "Guest":
+		return
+
+	from lms.lms.permissions import get_lesson_gate
+
+	gated = set(
+		frappe.get_all(
+			"LMS Course",
+			filters={"name": ("in", [c.name for c in courses]), "enforce_lesson_completion": 1},
+			pluck="name",
+		)
+	)
+
+	for course in courses:
+		membership = course.membership
+		pointer = membership.current_lesson
+
+		if course.name in gated:
+			_locked, resume = get_lesson_gate(course.name)
+			pointer = resume or pointer
+
+		if pointer:
+			membership.current_lesson_index = get_lesson_index(pointer)
 
 
 def get_featured_courses(filters: dict, or_filters: dict, fields: list, page_length: int) -> list:
