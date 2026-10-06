@@ -464,7 +464,7 @@
 								v-if="!showAnswers.length && !questionDetails.data.multiple"
 								type="radio"
 								:name="encodeURIComponent(questionDetails.data.question)"
-								class="w-3.5 h-3.5 shrink-0 text-ink-gray-9 focus:ring-outline-elevation-2"
+								class="w-3.5 h-3.5 shrink-0 text-blue-600 focus:ring-outline-elevation-2"
 								@change="markAnswer(index)"
 								:checked="selectedOptions[index - 1]"
 							/>
@@ -473,7 +473,7 @@
 								v-else-if="!showAnswers.length && questionDetails.data.multiple"
 								type="checkbox"
 								:name="encodeURIComponent(questionDetails.data.question)"
-								class="w-3.5 h-3.5 shrink-0 text-ink-gray-9 rounded-sm focus:ring-outline-elevation-2"
+								class="w-3.5 h-3.5 shrink-0 text-blue-600 rounded-sm focus:ring-outline-elevation-2"
 								@change="markAnswer(index)"
 								:checked="selectedOptions[index - 1]"
 							/>
