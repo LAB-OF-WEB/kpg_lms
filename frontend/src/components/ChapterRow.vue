@@ -87,7 +87,7 @@
 			>
 				<template #item="{ element: lesson }">
 					<div
-						class="outline-lesson ps-8 py-2 pe-4 text-ink-gray-9"
+						class="outline-lesson mb-1 rounded-md ps-8 py-2 pe-4 text-ink-gray-9"
 						:class="[
 							isActiveLesson(lesson.number)
 								? 'bg-surface-gray-3 rounded-md'

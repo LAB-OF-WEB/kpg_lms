@@ -2072,7 +2072,7 @@ def get_certification_details(course: str) -> dict:
 		frappe.db.get_value(
 			"LMS Course",
 			course,
-			["title", "paid_certificate", "evaluator"],
+			["title", "paid_certificate", "evaluator", "enable_certification"],
 			as_dict=1,
 		)
 		or frappe._dict()
@@ -2088,6 +2088,7 @@ def get_certification_details(course: str) -> dict:
 		"title": details.title,
 		"membership": membership,
 		"paid_certificate": details.paid_certificate,
+		"enable_certification": details.enable_certification,
 		# A staff email address. The page only reads it once the certificate has
 		# been paid for, so that is the gate rather than bare enrollment.
 		"evaluator": details.evaluator if membership and membership.purchased_certificate else None,

@@ -108,6 +108,31 @@
 					</div>
 				</div>
 
+				<!-- Last attempt, so the score survives a reload and a retake is clearly a retake -->
+				<div
+					v-if="lastAttempt"
+					class="mx-5 mb-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-md px-4 py-2 text-sm"
+					:class="
+						lastAttempt.passed
+							? 'bg-surface-green-2 text-ink-green-8'
+							: 'bg-surface-amber-2 text-ink-amber-8'
+					"
+				>
+					<span class="font-medium">{{ __('Last attempt') }}:</span>
+					<span>
+						{{ lastAttempt.percentage }}% ({{ lastAttempt.score }}/{{
+							lastAttempt.score_out_of
+						}})
+					</span>
+					<span class="font-medium">
+						{{ lastAttempt.passed ? __('Passed') : __('Not passed') }}
+					</span>
+					<span class="text-ink-gray-6">
+						{{ lastAttempt.creation }} ·
+						{{ __('Starting again will be a retake') }}
+					</span>
+				</div>
+
 				<!-- Proctored: centered info lines -->
 				<div
 					v-if="quiz.data.enable_proctoring && questions.length"
@@ -286,7 +311,7 @@
 								:disabled="!!quiz.data.enable_proctoring && !cameraReady"
 								@click="startQuiz"
 							>
-								{{ __('Start Quiz') }}
+								{{ lastAttempt ? __('Retake Quiz') : __('Start Quiz') }}
 							</Button>
 							<Button v-if="inVideo" @click="props.backToVideo()">{{
 								__('Resume Video')
@@ -769,7 +794,7 @@
 							"
 						>
 							<span>
-								{{ __('Try Again') }}
+								{{ __('Retake Quiz') }}
 							</span>
 						</Button>
 						<Button v-if="inVideo" @click="props.backToVideo()">
@@ -1160,6 +1185,17 @@ const timerUrgency = computed(() => {
 	return 'normal'
 })
 
+const lastAttempt = computed(() => {
+	// attempts is ordered creation desc, so row 0 is the latest
+	const row = attempts.data?.[0]
+	if (!row) return null
+	return {
+		...row,
+		percentage: Math.ceil(row.percentage || 0),
+		passed: (row.percentage || 0) >= (row.passing_percentage || 0),
+	}
+})
+
 const attemptsExhausted = computed(
 	() =>
 		!!quiz.data?.max_attempts &&
@@ -1283,6 +1319,10 @@ watch(
 		if (quiz.data && quiz.data.max_attempts) {
 			attempts.reload()
 			resetQuiz()
+		} else if (quiz.data && quiz.data.show_submission_history) {
+			// Attempts were only ever fetched for quizzes with a max_attempts cap, so
+			// "Show Submission History" did nothing on an uncapped quiz.
+			attempts.reload()
 		}
 	}
 )
@@ -1606,7 +1646,11 @@ const createSubmission = (reason = 'manual') => {
 				proctoringActive.value = false
 				if (props.quizName !== submittedQuiz) return
 				markLessonProgress()
-				if (quiz.data && quiz.data.max_attempts) attempts.reload()
+				if (
+					quiz.data &&
+					(quiz.data.max_attempts || quiz.data.show_submission_history)
+				)
+					attempts.reload()
 				stopTimer()
 			},
 			onError(err) {

@@ -74,7 +74,7 @@
 													query: studentViewQuery,
 											  }
 									"
-									class="flex w-full items-center gap-3 rounded ps-9 pe-3 py-2 text-start text-sm leading-5 text-ink-gray-8 hover:bg-surface-gray-2"
+									class="mb-1 flex w-full items-center gap-3 rounded-md ps-9 pe-3 py-2 text-start text-sm leading-5 text-ink-gray-8 hover:bg-surface-gray-2"
 									:class="rowClasses(lesson)"
 									@click="onLessonClick(lesson)"
 								>
@@ -131,6 +131,25 @@
 				{{ __('Complete the lessons above to continue.') }}
 			</p>
 		</div>
+
+		<!-- The last lesson has no Next, so the learner used to be left with an empty
+		     footer. Once the course is 100% done the next thing worth doing is getting
+		     the certificate. Only for courses with certification on; a paid certificate
+		     still goes through the header's "Get Certified" flow. -->
+		<div v-else-if="showCertificateCta" class="border-t px-4 py-4" :class="{ 'pb-6': !hideHeader }">
+			<Button
+				variant="solid"
+				size="md"
+				class="w-full !h-11"
+				:loading="issuingCertificate.loading"
+				@click="downloadCertificate"
+			>
+				<template #prefix>
+					<span class="lucide-graduation-cap size-4" />
+				</template>
+				{{ __('Download Certificate') }}
+			</Button>
+		</div>
 	</div>
 </template>
 
@@ -152,6 +171,7 @@ import {
 	SquareCode,
 } from 'lucide-vue-next'
 import { isLessonComplete, nextLessonIn, outlineLessons } from '@/composables/useLessonOrder'
+import { openExternal } from '@/utils/openExternal'
 
 const props = defineProps({
 	courseName: { type: String, required: true },
@@ -221,6 +241,58 @@ const nextLesson = computed(() => {
 	if (outline.error || !outline.data) return null
 	return nextLessonIn(outlineLessons(outline.data), props.selectedLessonNumber)
 })
+
+// Certificate CTA for the last lesson. `get_certification_details` says whether one is
+// already issued; otherwise `create_certificate` issues it (the server re-checks
+// enrollment, certification enabled and progress == 100) and we download that.
+const certification = createResource({
+	url: 'lms.lms.api.get_certification_details',
+	makeParams() {
+		return { course: props.courseName }
+	},
+	auto: Boolean(props.courseName),
+})
+
+const issuingCertificate = createResource({
+	url: 'lms.lms.doctype.lms_certificate.lms_certificate.create_certificate',
+	makeParams() {
+		return { course: props.courseName }
+	},
+	onSuccess(cert) {
+		certification.reload()
+		openCertificatePdf(cert)
+	},
+})
+
+watch(
+	() => props.courseName,
+	() => {
+		if (props.courseName) certification.reload()
+	}
+)
+
+const showCertificateCta = computed(() => {
+	if (nextLesson.value || outline.error || !outline.data) return false
+	if ((props.progress || 0) < 100) return false
+	const details = certification.data
+	if (!details) return false
+	if (details.certificate) return true
+	return Boolean(details.enable_certification) && !details.paid_certificate
+})
+
+function openCertificatePdf(cert) {
+	openExternal(
+		`/api/method/frappe.utils.print_format.download_pdf?doctype=LMS+Certificate&name=${
+			cert.name
+		}&format=${encodeURIComponent(cert.template)}`
+	)
+}
+
+function downloadCertificate() {
+	const existing = certification.data?.certificate
+	if (existing) return openCertificatePdf(existing)
+	issuingCertificate.submit({ course: props.courseName })
+}
 
 function goToNextLesson() {
 	const lesson = nextLesson.value
