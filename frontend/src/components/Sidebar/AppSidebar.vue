@@ -1,12 +1,11 @@
 <template>
 	<div
-		class="kpg-lms-sidebar flex h-full flex-col justify-between transition-all duration-300 ease-in-out border-e overflow-x-hidden"
-		:class="sidebarStore.isSidebarCollapsed ? 'w-14' : 'w-[210px]'"
+		class="kpg-lms-sidebar flex h-full flex-col justify-between transition-all duration-300 ease-in-out overflow-x-hidden"
+		:class="isCollapsed ? 'w-14 kpg-lms-collapsed' : 'w-[210px]'"
 	>
 		<a
-			v-if="deskUrl"
 			class="kpg-lms-logo"
-			:href="deskUrl"
+			:href="deskUrl || '/app'"
 			:aria-label="__('Back to Desk')"
 		>
 			<img
@@ -15,13 +14,6 @@
 				onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
 			/>
 		</a>
-		<span v-else class="kpg-lms-logo" aria-hidden="true">
-			<img
-				:src="kpgLogo"
-				alt="KPG"
-				onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
-			/>
-		</span>
 		<div
 			class="flex flex-col overflow-y-auto flex-1 min-h-0"
 			:class="sidebarStore.isSidebarCollapsed ? 'items-center' : ''"
@@ -351,6 +343,7 @@ let sidebarStore = useSidebar()
 // KPG brand mark lives in the kpg_crm app; a runtime string (not a static
 // src attribute) so vite leaves it alone and the browser fetches it as-is.
 const kpgLogo = '/assets/kpg_crm/images/kpg.jpeg'
+const isCollapsed = computed(() => sidebarStore.isSidebarCollapsed)
 const socket = inject('$socket')
 const sidebarLinks = ref(null)
 const { capture } = useTelemetry()

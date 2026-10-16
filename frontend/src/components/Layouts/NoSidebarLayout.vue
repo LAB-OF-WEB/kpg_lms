@@ -7,6 +7,31 @@
 		>
 			{{ __('Skip to main content') }}
 		</a>
+		<header class="kpg-lms-topbar">
+			<a
+				v-if="deskUrl"
+				:href="deskUrl"
+				class="kpg-lms-logo !h-9 !min-h-9 !w-auto !bg-transparent !border-0 !p-0"
+				:aria-label="__('Back to Desk')"
+			>
+				<img
+					:src="kpgLogo"
+					alt="KPG"
+					class="!h-8"
+					onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
+				/>
+			</a>
+			<span class="kpg-lms-topbar-title">{{ __('Learning') }}</span>
+			<button
+				v-if="canShowDesk"
+				type="button"
+				class="kpg-lms-toggle"
+				:aria-label="__('Back to Desk')"
+				@click="goDesk"
+			>
+				<span class="lucide-arrow-left size-4" aria-hidden="true" />
+			</button>
+		</header>
 		<div class="h-full flex-1">
 			<div class="flex h-dvh text-base bg-surface-base">
 				<main
@@ -31,13 +56,13 @@
 	</div>
 </template>
 <script setup lang="ts">
-// Lesson / persona pages deliberately keep no sidebar (focus mode), so the
-// way back is a single floating pill, gated the same as the sidebar link.
 import { computed } from 'vue'
 import { skipToContent } from '@/utils/a11y'
 import { usersStore } from '@/stores/user'
 
 const { userResource } = usersStore()
+
+const kpgLogo = '/assets/kpg_crm/images/kpg.jpeg'
 
 const canShowDesk = computed(() =>
 	Boolean(
@@ -45,6 +70,10 @@ const canShowDesk = computed(() =>
 			(userResource.data as any)?.desk_url
 	)
 )
+
+const deskUrl = computed(() => {
+	return (userResource.data as any)?.desk_url || null
+})
 
 const goDesk = () => {
 	const url = (userResource.data as any)?.desk_url
