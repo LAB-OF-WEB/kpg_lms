@@ -82,6 +82,8 @@ def get_user_info():
 	user.is_system_manager = "System Manager" in user.roles
 	user.sitename = frappe.local.site
 	user.developer_mode = frappe.conf.developer_mode
+	user.can_access_desk = _can_access_desk(user.roles)
+	user.desk_url = _desk_url(user.roles)
 	if user.is_fc_site and user.is_system_manager:
 		user.site_info = current_site_info()
 	user.permissions = _doctype_permissions()
@@ -144,6 +146,67 @@ def get_doc_permissions_many(doctype: str, names: str | list[str]):
 		# as a deny, so {} and read=0 render the same.
 		out[name] = perms if perms.get("read") else {}
 	return out
+
+
+def _has_desk_page(page_name: str) -> bool:
+	"""Whether the session user may open a Desk Page.
+
+	Same rule Desk itself enforces (kpg_crm.utils.has_page_permission):
+	System Manager / Administrator pass; otherwise the user must share a role
+	with the Page's Has Role rows (a Page with no rows is open to all).
+	Kept local (not imported from kpg_crm) so the LMS installs and runs where
+	kpg_crm is absent.
+	"""
+	try:
+		if frappe.session.user == "Guest":
+			return False
+		if frappe.session.user == "Administrator":
+			return True
+		roles = set(frappe.get_roles())
+		if roles & {"System Manager", "Administrator"}:
+			return True
+		page_roles = frappe.get_all(
+			"Has Role",
+			filters={"parent": page_name, "parenttype": "Page"},
+			pluck="role",
+		)
+		if not page_roles:
+			return True
+		return bool(roles & set(page_roles))
+	except Exception:
+		return False
+
+
+def _desk_url(roles: list[str]) -> str | None:
+	"""Where Back-to-Desk may land, or None when there is nowhere valid.
+
+	Routing mirrors kpg_crm.utils.set_desk_home: kpg-dashboard when permitted,
+	agro-dashboard for agro users, otherwise bare /app (Desk resolves the
+	user's own home) for System Users. A fixed /app/kpg-dashboard target is
+	wrong here — verified in-browser 2026-10-16: a Sales User without Page
+	permission gets a "Not permitted" dialog plus a getpage 403.
+	"""
+	try:
+		if frappe.session.user == "Guest":
+			return None
+		if _has_desk_page("kpg-dashboard"):
+			return "/app/kpg-dashboard"
+		is_agro = any("agro" in r.lower() or "agriculture" in r.lower() for r in roles)
+		if is_agro and _has_desk_page("agro-dashboard"):
+			return "/app/agro-dashboard"
+		if frappe.db.get_value("User", frappe.session.user, "user_type") == "System User":
+			return "/app"
+	except Exception:
+		pass
+	return None
+
+
+def _can_access_desk(roles: list[str]) -> int:
+	"""Whether the LMS "Back to Desk" link should show (1) or not (0).
+
+	Fail-closed: no resolvable Desk target means no link, never a 403 wall.
+	"""
+	return 1 if _desk_url(roles) else 0
 
 
 def _doctype_permissions():

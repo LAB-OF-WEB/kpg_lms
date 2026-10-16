@@ -1,13 +1,55 @@
 <template>
 	<div
-		class="flex h-full flex-col justify-between transition-all duration-300 ease-in-out border-e bg-surface-sidebar overflow-x-hidden"
-		:class="sidebarStore.isSidebarCollapsed ? 'w-14' : 'w-56'"
+		class="kpg-lms-sidebar flex h-full flex-col justify-between transition-all duration-300 ease-in-out border-e overflow-x-hidden"
+		:class="sidebarStore.isSidebarCollapsed ? 'w-14' : 'w-[210px]'"
 	>
+		<a
+			v-if="deskUrl"
+			class="kpg-lms-logo"
+			:href="deskUrl"
+			:aria-label="__('Back to Desk')"
+		>
+			<img
+				:src="kpgLogo"
+				alt="KPG"
+				onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
+			/>
+		</a>
+		<span v-else class="kpg-lms-logo" aria-hidden="true">
+			<img
+				:src="kpgLogo"
+				alt="KPG"
+				onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
+			/>
+		</span>
 		<div
 			class="flex flex-col overflow-y-auto flex-1 min-h-0"
 			:class="sidebarStore.isSidebarCollapsed ? 'items-center' : ''"
 		>
-			<UserDropdown :isCollapsed="sidebarStore.isSidebarCollapsed" />
+			<button
+				v-if="canShowDesk && !sidebarStore.isSidebarCollapsed"
+				type="button"
+				class="kpg-lms-back"
+				:aria-label="__('Back to Desk')"
+				@click="goDesk"
+			>
+				<span class="lucide-arrow-left h-4 w-4" aria-hidden="true" />
+				<span>{{ __('Back to Desk') }}</span>
+			</button>
+			<button
+				v-else-if="canShowDesk"
+				type="button"
+				class="kpg-lms-back !px-0 justify-center"
+				:aria-label="__('Back to Desk')"
+				:title="__('Back to Desk')"
+				@click="goDesk"
+			>
+				<span class="lucide-arrow-left h-4 w-4" aria-hidden="true" />
+			</button>
+			<div v-if="canShowDesk" class="kpg-lms-divider" aria-hidden="true" />
+			<div class="kpg-lms-user">
+				<UserDropdown :isCollapsed="sidebarStore.isSidebarCollapsed" />
+			</div>
 			<div class="flex flex-col" v-if="sidebarSettings.data">
 				<div v-for="link in sidebarLinks" class="mx-2 my-2.5">
 					<div
@@ -154,9 +196,17 @@
 				:isSidebarCollapsed="sidebarStore.isSidebarCollapsed"
 				appName="learning"
 			/>
+			<div
+				v-if="!sidebarStore.isSidebarCollapsed"
+				class="kpg-lms-footer"
+				aria-hidden="true"
+			>
+				<div>Build Better Roofs</div>
+				<div>Build Brighter Futures</div>
+			</div>
 
 			<div
-				class="flex items-center mt-4"
+				class="kpg-lms-tools flex items-center mt-4"
 				:class="
 					sidebarStore.isSidebarCollapsed ? 'flex-col space-y-3' : 'flex-row'
 				"
@@ -298,6 +348,9 @@ import {
 
 const { userResource } = usersStore()
 let sidebarStore = useSidebar()
+// KPG brand mark lives in the kpg_crm app; a runtime string (not a static
+// src attribute) so vite leaves it alone and the browser fetches it as-is.
+const kpgLogo = '/assets/kpg_crm/images/kpg.jpeg'
 const socket = inject('$socket')
 const sidebarLinks = ref(null)
 const { capture } = useTelemetry()
@@ -670,6 +723,22 @@ const redirectToWebsite = () => {
 const isStudent = computed(() => {
 	return userResource.data?.is_student
 })
+
+// Gated by get_user_info (lms/lms/api.py): desk_url is the user's real Desk
+// home (kpg-dashboard when permitted, else their own home, else absent).
+// Guests get nothing so the link never shows; a hardcoded /app/kpg-dashboard
+// 403s for users without Page permission (verified 2026-10-16).
+const canShowDesk = computed(() => {
+	return Boolean(userResource.data?.can_access_desk && userResource.data?.desk_url)
+})
+
+const deskUrl = computed(() => {
+	return userResource.data?.desk_url || null
+})
+
+const goDesk = () => {
+	if (deskUrl.value) window.location.href = deskUrl.value
+}
 
 const profileIsComplete = computed(() => {
 	return (

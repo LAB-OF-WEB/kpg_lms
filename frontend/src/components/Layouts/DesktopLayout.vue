@@ -7,13 +7,13 @@
 		>
 			{{ __('Skip to main content') }}
 		</a>
-		<div class="h-full border-e bg-surface-sidebar">
+		<div class="h-full border-e">
 			<AppSidebar />
 		</div>
 		<main
 			id="main-content"
 			tabindex="-1"
-			class="flex-1 flex flex-col h-full overflow-auto bg-surface-base focus:outline-none"
+			class="kpg-lms-main flex-1 flex flex-col h-full overflow-auto focus:outline-none"
 		>
 			<slot />
 		</main>

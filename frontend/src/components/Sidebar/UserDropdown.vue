@@ -106,10 +106,12 @@ const apps = createResource({
 
 function deskApp() {
 	return {
-		name: 'frappe',
-		logo: '/assets/lms/images/desk.png',
-		title: __('Desk'),
-		route: '/desk/learning',
+		name: 'kpg',
+		logo: '/assets/kpg_crm/images/kpg.jpeg',
+		title: __('Back to Desk'),
+		// The user's real Desk home (kpg-dashboard when permitted, else their
+		// own home); a hardcoded /app/kpg-dashboard 403s without Page permission.
+		route: userResource.data?.desk_url || '/app',
 	}
 }
 

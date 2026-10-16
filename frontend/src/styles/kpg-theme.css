@@ -1,0 +1,374 @@
+/* KPG theme bridge for the LMS SPA.
+   Tokens copied from kpg_crm/public/css/kpg_shell.css (:root).
+   This file only re-skins LMS chrome (sidebar, topbar, Home cards) so the
+   LMS reads as the same product as Desk. LMS data logic is untouched. */
+
+:root {
+	--kpg-brand: #8a0b4d;
+	--kpg-brand-2: #a81563;
+	--kpg-brand-3: #eb008b;
+	--kpg-surface: #ffffff;
+	--kpg-canvas: #f8fafc;
+	--kpg-border: #e8edf3;
+	--kpg-ink: #0f172a;
+	--kpg-ink-2: #334155;
+	--kpg-muted: #64748b;
+	--kpg-s4: 10px;
+	--kpg-s6: 14px;
+	--kpg-r1: 6px;
+	--kpg-r2: 8px;
+	--kpg-r3: 10px;
+	--kpg-r4: 12px;
+	--kpg-sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+	--kpg-sh-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+	--kpg-sh-md: 0 6px 16px -8px rgba(15, 23, 42, 0.25);
+	--kpg-rail-w: 210px;
+}
+
+/* ---------- Sidebar shell (desktop + mobile drawer share this) ---------- */
+.kpg-lms-sidebar {
+	background: linear-gradient(180deg, #780a43 0%, #8a0b4d 55%, #6a083a 100%) !important;
+	color: #fff !important;
+	border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Logo header: same pink band as the Desk rail. */
+.kpg-lms-logo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 64px;
+	height: 64px;
+	padding: 0 var(--kpg-s6);
+	background: var(--kpg-brand-3);
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	text-decoration: none;
+	flex-shrink: 0;
+}
+
+.kpg-lms-logo:hover {
+	background: #d6007e;
+	text-decoration: none;
+}
+
+.kpg-lms-logo img {
+	display: block;
+	width: auto;
+	max-width: 175px;
+	height: 42px;
+	max-height: 42px;
+	object-fit: contain;
+}
+
+.kpg-lms-logo-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	padding: 0 18px;
+	background: #fff;
+	color: var(--kpg-brand);
+	font-weight: 800;
+	font-size: 15px;
+	letter-spacing: 0.5px;
+	border-radius: 0;
+}
+
+/* Back to Desk row + section labels inside the rail. */
+.kpg-lms-back {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 12px 8px 4px;
+	padding: 9px 14px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: #fff;
+	background: rgba(255, 255, 255, 0.14);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	cursor: pointer;
+	width: calc(100% - 16px);
+	text-align: left;
+	transition: background 0.15s ease;
+}
+
+.kpg-lms-back:hover {
+	background: rgba(255, 255, 255, 0.22);
+}
+
+.kpg-lms-back svg,
+.kpg-lms-back .lucide {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.kpg-lms-divider {
+	height: 1px;
+	background: rgba(255, 255, 255, 0.12);
+	margin: 10px 14px 6px;
+}
+
+.kpg-lms-section-label {
+	padding: 0 14px;
+	margin: 2px 0 6px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.6);
+}
+
+/* LMS nav links inside the KPG rail. SidebarLink.vue renders a button with
+   surface-token classes, so override them here rather than forking it. */
+.kpg-lms-sidebar nav button {
+	color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.kpg-lms-sidebar nav button:hover {
+	background: rgba(255, 255, 255, 0.12) !important;
+	color: #fff !important;
+}
+
+.kpg-lms-sidebar nav button[class*='bg-surface-elevation-3'] {
+	background: linear-gradient(
+		90deg,
+		rgba(235, 0, 139, 0.35) 0%,
+		rgba(255, 255, 255, 0.16) 100%
+	) !important;
+	color: #fff !important;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.kpg-lms-sidebar nav button svg,
+.kpg-lms-sidebar nav button [class*='lucide'] {
+	color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.kpg-lms-sidebar nav button[class*='bg-surface-elevation-3'] svg,
+.kpg-lms-sidebar nav button[class*='bg-surface-elevation-3'] [class*='lucide'] {
+	color: #fff !important;
+}
+
+/* Section labels above each link group sit directly on magenta. Scoped to
+   text-p-base-medium (the label scale) so light-surface cards lower in the
+   rail — profile prompt, banners — keep their dark text. */
+.kpg-lms-sidebar .text-p-base-medium {
+	color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* User trigger + bottom tool row sit directly on magenta. */
+.kpg-lms-sidebar .kpg-lms-user > div > button,
+.kpg-lms-sidebar .kpg-lms-user > div > button *,
+.kpg-lms-sidebar .kpg-lms-tools,
+.kpg-lms-sidebar .kpg-lms-tools * {
+	color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* User block + footer inside the rail. */
+.kpg-lms-sidebar .kpg-lms-user button {
+	color: #fff !important;
+}
+
+/* The dropdown trigger is a fixed w-52 (208px); inside the 210px rail plus
+   its p-2 wrapper that overflows and raises a horizontal scrollbar. */
+.kpg-lms-sidebar .kpg-lms-user > div {
+	min-width: 0;
+}
+
+.kpg-lms-sidebar .kpg-lms-user button {
+	max-width: 100%;
+}
+
+/* Belt-and-braces: the inner scroller must never scroll sideways. */
+.kpg-lms-sidebar .overflow-y-auto {
+	overflow-x: hidden;
+}
+
+/* Command-shortcut pills (Search > Ctrl K) are light-grey chips on the
+   light theme; on the magenta rail they read as white blobs. */
+.kpg-lms-sidebar nav button [class*='bg-surface-gray-2'] {
+	background: rgba(255, 255, 255, 0.16) !important;
+	color: #fff !important;
+}
+
+.kpg-lms-sidebar .kpg-lms-user button:hover {
+	background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.kpg-lms-footer {
+	margin: 10px;
+	padding: 12px 14px;
+	background: rgba(0, 0, 0, 0.2);
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	font-size: 11.5px;
+	line-height: 1.45;
+	text-align: center;
+	color: rgba(255, 255, 255, 0.75);
+	letter-spacing: 0.2px;
+}
+
+.kpg-lms-footer div:first-child {
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.95);
+	margin-bottom: 2px;
+}
+
+/* ---------- Desktop main canvas ---------- */
+.kpg-lms-main {
+	background: var(--kpg-canvas) !important;
+}
+
+/* ---------- LMS Home dashboard cards ---------- */
+.kpg-lms-home h1 {
+	color: var(--kpg-ink) !important;
+}
+
+.kpg-lms-home h2 {
+	color: var(--kpg-ink) !important;
+}
+
+.kpg-lms-home .border.rounded-md {
+	background: var(--kpg-surface) !important;
+	border: 1px solid var(--kpg-border) !important;
+	border-radius: var(--kpg-r4) !important;
+	box-shadow: var(--kpg-sh-sm) !important;
+}
+
+/* ---------- Mobile: KPG drawer replaces the bottom tab bar ---------- */
+.kpg-lms-topbar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 54px;
+	padding: 0 12px 0 10px;
+	background: var(--kpg-surface);
+	border-bottom: 1px solid #edf2f7;
+	flex-shrink: 0;
+}
+
+.kpg-lms-toggle {
+	display: inline-flex;
+	width: 40px;
+	height: 40px;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--kpg-r2);
+	border: 1px solid var(--kpg-border);
+	background: var(--kpg-surface);
+	color: var(--kpg-ink);
+	font-size: 16px;
+	cursor: pointer;
+	box-shadow: var(--kpg-sh-sm);
+	flex-shrink: 0;
+}
+
+.kpg-lms-topbar-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--kpg-ink);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kpg-lms-drawer {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 240px;
+	max-width: min(84vw, 300px);
+	z-index: 1400;
+	transform: translateX(-100%);
+	transition: transform 0.22s ease;
+	box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
+	overscroll-behavior: contain;
+}
+
+.kpg-lms-drawer.open {
+	transform: translateX(0);
+}
+
+.kpg-lms-drawer .kpg-lms-sidebar {
+	width: 100% !important;
+	height: 100%;
+}
+
+.kpg-lms-scrim {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+	z-index: 1397;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
+}
+
+.kpg-lms-scrim.show {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.kpg-lms-close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 1;
+	width: 40px;
+	height: 40px;
+	border: 0;
+	border-radius: var(--kpg-r1);
+	background: rgba(255, 255, 255, 0.14);
+	color: #fff;
+	font-size: 16px;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* ---------- NoSidebar (lesson / persona) floating Back pill ---------- */
+.kpg-lms-back-pill {
+	position: fixed;
+	left: 12px;
+	bottom: 12px;
+	z-index: 50;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	border-radius: 999px;
+	background: var(--kpg-brand);
+	color: #fff;
+	font-size: 13px;
+	font-weight: 600;
+	border: 0;
+	cursor: pointer;
+	box-shadow: var(--kpg-sh-md);
+}
+
+.kpg-lms-back-pill:hover {
+	background: var(--kpg-brand-2);
+}
+
+@media print {
+	.kpg-lms-drawer,
+	.kpg-lms-toggle,
+	.kpg-lms-topbar,
+	.kpg-lms-scrim,
+	.kpg-lms-back-pill {
+		display: none !important;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.kpg-lms-drawer,
+	.kpg-lms-scrim {
+		transition: none;
+	}
+}

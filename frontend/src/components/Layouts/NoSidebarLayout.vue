@@ -18,8 +18,36 @@
 				</main>
 			</div>
 		</div>
+		<button
+			v-if="canShowDesk"
+			type="button"
+			class="kpg-lms-back-pill"
+			:aria-label="__('Back to Desk')"
+			@click="goDesk"
+		>
+			<span class="lucide-arrow-left size-4" aria-hidden="true" />
+			{{ __('Back to Desk') }}
+		</button>
 	</div>
 </template>
 <script setup lang="ts">
+// Lesson / persona pages deliberately keep no sidebar (focus mode), so the
+// way back is a single floating pill, gated the same as the sidebar link.
+import { computed } from 'vue'
 import { skipToContent } from '@/utils/a11y'
+import { usersStore } from '@/stores/user'
+
+const { userResource } = usersStore()
+
+const canShowDesk = computed(() =>
+	Boolean(
+		(userResource.data as any)?.can_access_desk &&
+			(userResource.data as any)?.desk_url
+	)
+)
+
+const goDesk = () => {
+	const url = (userResource.data as any)?.desk_url
+	if (url) window.location.href = url
+}
 </script>
