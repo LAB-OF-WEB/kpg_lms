@@ -2,43 +2,105 @@
 	<div
 		class="kpg-lms-sidebar flex h-full flex-col justify-between transition-all duration-300 ease-in-out overflow-x-hidden"
 		:class="isCollapsed ? 'w-14 kpg-lms-collapsed' : 'w-[210px]'"
+		:id="sidebarId"
 	>
+		<!-- Common Top Logo -->
 		<a
 			class="kpg-lms-logo"
-			:href="deskUrl || '/app'"
+			:href="safeUrl(deskUrl || '/app')"
 			:aria-label="__('Back to Desk')"
 		>
 			<img
-				:src="kpgLogo"
+				:src="safeUrl(brandLogo)"
 				alt="KPG"
 				onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
 			/>
 		</a>
-		<div
-			class="flex flex-col overflow-y-auto flex-1 min-h-0"
-			:class="sidebarStore.isSidebarCollapsed ? 'items-center' : ''"
-		>
+
+		<!-- View 1: KPG Shell Rail (default) -->
+		<template v-if="sidebarMode === 'kpg'">
+			<ul class="kpg-nav flex-1 overflow-y-auto min-h-0 py-2">
+				<li
+					v-for="item in navItems"
+					:key="item.label"
+					class="kpg-nav-item"
+					:class="{
+						active: item.label === 'LMS',
+						'justify-center !px-0 !mx-1': isCollapsed,
+					}"
+					role="link"
+					tabindex="0"
+					:aria-label="item.label"
+					:title="isCollapsed ? item.label : undefined"
+					:data-href="safeUrl(item.href)"
+					:data-match="item.match.join(',')"
+					@click.prevent="handleNavClick(item)"
+					@keydown.enter="handleNavClick(item)"
+				>
+					<span class="kpg-nav-icon" aria-hidden="true">
+						<component :is="item.icon" class="h-4 w-4" />
+					</span>
+					<span v-if="!isCollapsed" class="kpg-nav-label">{{ item.label }}</span>
+				</li>
+			</ul>
+
+			<!-- Admin toggle to switch to original LMS sidebar -->
 			<button
-				v-if="canShowDesk && !sidebarStore.isSidebarCollapsed"
+				v-if="isAdminOrSysMgr && !isCollapsed"
 				type="button"
-				class="kpg-lms-back"
-				:aria-label="__('Back to Desk')"
-				@click="goDesk"
+				class="kpg-lms-toggle-view"
+				:aria-label="__('Original LMS Sidebar')"
+				:title="__('View Original LMS Sidebar')"
+				@click="toggleSidebarMode"
 			>
-				<span class="lucide-arrow-left h-4 w-4" aria-hidden="true" />
-				<span>{{ __('Back to Desk') }}</span>
+				<component :is="LayoutPanelLeft" class="h-4 w-4 shrink-0" aria-hidden="true" />
+				<span>{{ __('Original LMS Sidebar') }}</span>
 			</button>
 			<button
-				v-else-if="canShowDesk"
+				v-else-if="isAdminOrSysMgr && isCollapsed"
 				type="button"
-				class="kpg-lms-back !px-0 justify-center"
-				:aria-label="__('Back to Desk')"
-				:title="__('Back to Desk')"
-				@click="goDesk"
+				class="kpg-lms-toggle-view !px-0 !mx-1 justify-center"
+				:aria-label="__('Original LMS Sidebar')"
+				:title="__('View Original LMS Sidebar')"
+				@click="toggleSidebarMode"
 			>
-				<span class="lucide-arrow-left h-4 w-4" aria-hidden="true" />
+				<component :is="LayoutPanelLeft" class="h-4 w-4 shrink-0" aria-hidden="true" />
 			</button>
-			<div v-if="canShowDesk" class="kpg-lms-divider" aria-hidden="true" />
+
+			<div v-if="!isCollapsed" class="kpg-lms-footer !mt-auto" aria-hidden="true">
+				<div>Build Better Roofs</div>
+				<div>Build Brighter Futures</div>
+			</div>
+		</template>
+
+		<!-- View 2: Original Frappe LMS Sidebar (available for Administrator / System Manager) -->
+		<template v-else>
+			<div
+				class="flex flex-col overflow-y-auto flex-1 min-h-0"
+				:class="sidebarStore.isSidebarCollapsed ? 'items-center' : ''"
+			>
+				<!-- Button for Admin to switch back to KPG Rail -->
+				<button
+					v-if="isAdminOrSysMgr && !sidebarStore.isSidebarCollapsed"
+					type="button"
+					class="kpg-lms-toggle-view !my-2"
+					:aria-label="__('Switch to KPG Sidebar')"
+					@click="toggleSidebarMode"
+				>
+					<component :is="LayoutGrid" class="h-4 w-4 shrink-0" aria-hidden="true" />
+					<span>{{ __('Switch to KPG Sidebar') }}</span>
+				</button>
+				<button
+					v-else-if="isAdminOrSysMgr"
+					type="button"
+					class="kpg-lms-toggle-view !my-2 !px-0 justify-center"
+					:aria-label="__('Switch to KPG Sidebar')"
+					:title="__('Switch to KPG Sidebar')"
+					@click="toggleSidebarMode"
+				>
+					<component :is="LayoutGrid" class="h-4 w-4 shrink-0" aria-hidden="true" />
+				</button>
+
 			<div class="kpg-lms-user">
 				<UserDropdown :isCollapsed="sidebarStore.isSidebarCollapsed" />
 			</div>
@@ -277,6 +339,7 @@
 			v-model="showIntermediateModal"
 			:currentStep="currentStep"
 		/>
+		</template>
 	</div>
 	<CommandPalette v-model="settingsStore.isCommandPaletteOpen" />
 	<PageModal
@@ -287,15 +350,6 @@
 </template>
 
 <script setup>
-import { getSidebarLinks } from '@/utils'
-import { usersStore } from '@/stores/user'
-import { useSidebar } from '@/stores/sidebar'
-import { useSettings } from '@/stores/settings'
-import { Button, call, Tooltip, toast } from 'frappe-ui'
-import PageModal from '@/components/Modals/PageModal.vue'
-import LMSLogo from '@/components/Icons/LMSLogo.vue'
-import { useRouter } from 'vue-router'
-import { openFormRoute } from '@/composables/useFormRoute'
 import {
 	ref,
 	onMounted,
@@ -307,15 +361,8 @@ import {
 	onUnmounted,
 	computed,
 } from 'vue'
-import {
-	BookOpen,
-	CircleHelp,
-	FolderTree,
-	FileText,
-	UserPlus,
-	Users,
-	BookText,
-} from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { Button, call, Tooltip, toast } from 'frappe-ui'
 import {
 	TrialBanner,
 	HelpModal,
@@ -326,12 +373,42 @@ import {
 	IntermediateStepModal,
 	useTelemetry,
 } from 'frappe-ui/frappe'
+import {
+	BookOpen,
+	CircleHelp,
+	FolderTree,
+	FileText,
+	UserPlus,
+	Users,
+	BookText,
+	LayoutDashboard,
+	User,
+	Briefcase,
+	Wrench,
+	CheckSquare,
+	Database,
+	Building2,
+	MessageSquare,
+	LayoutPanelLeft,
+	LayoutGrid,
+} from 'lucide-vue-next'
+
+import PageModal from '@/components/Modals/PageModal.vue'
+import LMSLogo from '@/components/Icons/LMSLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
 import UserDropdown from '@/components/Sidebar/UserDropdown.vue'
 import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
 import SidebarLink from '@/components/Sidebar/SidebarLink.vue'
 import CommandPalette from '@/components/CommandPalette/CommandPalette.vue'
+
+import { getSidebarLinks } from '@/utils'
 import { openExternal } from '@/utils/openExternal'
+import { safeUrl } from '@/utils/safeUrl'
+import { openFormRoute } from '@/composables/useFormRoute'
+import { usersStore } from '@/stores/user'
+import { useSidebar } from '@/stores/sidebar'
+import { useSettings } from '@/stores/settings'
+import { sessionStore } from '@/stores/session'
 import {
 	loadUnreadCount,
 	unreadCount,
@@ -339,10 +416,17 @@ import {
 } from '@/stores/notifications'
 
 const { userResource } = usersStore()
-let sidebarStore = useSidebar()
-// KPG brand mark lives in the kpg_crm app; a runtime string (not a static
-// src attribute) so vite leaves it alone and the browser fetches it as-is.
-const kpgLogo = '/assets/kpg_crm/images/kpg.jpeg'
+const sidebarStore = useSidebar()
+const { branding } = sessionStore()
+const settingsStore = useSettings()
+const {
+	sidebarSettings,
+	activeTab,
+	isSettingsOpen,
+	programs,
+	loadSidebarSettings,
+} = useSettings()
+
 const isCollapsed = computed(() => sidebarStore.isSidebarCollapsed)
 const socket = inject('$socket')
 const sidebarLinks = ref(null)
@@ -351,14 +435,6 @@ const showPageModal = ref(false)
 const isModerator = ref(false)
 const isInstructor = ref(false)
 const pageToEdit = ref(null)
-const {
-	sidebarSettings,
-	activeTab,
-	isSettingsOpen,
-	programs,
-	loadSidebarSettings,
-} = useSettings()
-const settingsStore = useSettings()
 const showOnboarding = ref(false)
 const showIntermediateModal = ref(false)
 const currentStep = ref({})
@@ -373,18 +449,274 @@ const iconProps = {
 	height: 16,
 }
 
+const kpgLogo = '/assets/kpg_crm/images/kpg.jpeg'
+const brandLogo = computed(() => {
+	try {
+		return (
+			branding?.data?.banner_image?.file_url ||
+			branding?.data?.app_logo ||
+			kpgLogo
+		)
+	} catch {
+		return kpgLogo
+	}
+})
+
+const sidebarId = 'kpg-lms-sidebar'
+
+const userRoles = computed(() => {
+	return userResource.data?.roles || []
+})
+
+// Whether current user is Administrator or System Manager
+const isAdminOrSysMgr = computed(() => {
+	const roles = userRoles.value
+	const userObj = userResource?.data
+	let cookieUser = null
+	try {
+		const cookies = new URLSearchParams(document.cookie.split('; ').join('&'))
+		cookieUser = cookies.get('user_id')
+	} catch {}
+
+	return Boolean(
+		roles.includes('System Manager') ||
+		roles.includes('Administrator') ||
+		userObj?.is_system_manager ||
+		userObj?.is_admin ||
+		(userObj?.name === 'Administrator') ||
+		(cookieUser === 'Administrator') ||
+		(window.frappe?.session?.user === 'Administrator')
+	)
+})
+
+// Sidebar mode: 'kpg' (default) or 'original'
+const storedMode = typeof localStorage !== 'undefined' ? localStorage.getItem('lms_sidebar_view_mode') : null
+const sidebarMode = ref(isAdminOrSysMgr.value && storedMode === 'original' ? 'original' : 'kpg')
+
+watch(isAdminOrSysMgr, (isAdmin) => {
+	if (!isAdmin && sidebarMode.value !== 'kpg') {
+		sidebarMode.value = 'kpg'
+	}
+})
+
+function toggleSidebarMode() {
+	sidebarMode.value = sidebarMode.value === 'kpg' ? 'original' : 'kpg'
+	try {
+		localStorage.setItem('lms_sidebar_view_mode', sidebarMode.value)
+	} catch {}
+}
+
+// Navigation items matching kpg_shell.js nav_items()
+const navItems = computed(() => {
+	const roles = userRoles.value
+	const isSys = isAdminOrSysMgr.value
+	const isAgro = roles.some((r) => /agro|agriculture/i.test(r))
+	const isSalesOrCrm = roles.some((r) => /sales|cre|crm/i.test(r))
+	const isAgroOnlyUser = !isSys && isAgro && !isSalesOrCrm
+	const items = []
+
+	if (isAgroOnlyUser) {
+		items.push({
+			label: 'Agromart',
+			icon: markRaw(Wrench),
+			href: '/app/agro-dashboard',
+			match: ['agro-dashboard'],
+		})
+		items.push({
+			label: 'Enquiries',
+			icon: markRaw(CheckSquare),
+			href: '/app/kpg-enquiry',
+			match: ['kpg-enquiry', 'kpg enquiry'],
+		})
+		items.push({
+			label: 'LMS',
+			icon: markRaw(BookOpen),
+			href: '/lms',
+			match: ['lms'],
+		})
+		return items
+	}
+
+	// 1. Dashboard
+	if (
+		isSys ||
+		userResource.data?.desk_url === '/app/kpg-dashboard' ||
+		roles.some((r) =>
+			[
+				'FDM',
+				'Purchase Admin',
+				'HR',
+				'Product Collateral Manager',
+				'Branch Manager',
+				'Customer Relationship Executive',
+				'CRE Sales',
+			].includes(r)
+		)
+	) {
+		items.push({
+			label: 'Dashboard',
+			icon: markRaw(LayoutDashboard),
+			href: '/app/kpg-dashboard',
+			match: ['kpg-dashboard'],
+		})
+	}
+
+	// 2. Leads
+	if (
+		isSys ||
+		roles.some((r) =>
+			[
+				'Desk User',
+				'Sales User',
+				'Sales Manager',
+				'Sales Person',
+				'sales head',
+				'Branch Manager',
+				'Business Development Manager',
+				'Customer Relationship Executive',
+				'CRE Sales',
+				'dm agent',
+				'Operations Manager',
+				'Lead Capture API',
+			].includes(r)
+		)
+	) {
+		items.push({
+			label: 'Leads',
+			icon: markRaw(User),
+			href: '/app/lead',
+			match: ['lead'],
+		})
+	}
+
+	// 3. Deals
+	if (
+		isSys ||
+		roles.some((r) =>
+			[
+				'Branch Manager',
+				'Business Development Manager',
+				'Customer Relationship Executive',
+				'CRE Sales',
+				'Sales Person',
+				'Projects Manager',
+			].includes(r)
+		)
+	) {
+		items.push({
+			label: 'Deals',
+			icon: markRaw(Briefcase),
+			href: '/app/deal',
+			match: ['deal'],
+		})
+	}
+
+	// 4. Agromart
+	if (
+		isSys ||
+		userResource.data?.desk_url === '/app/agro-dashboard' ||
+		roles.some((r) => /agro|agriculture/i.test(r))
+	) {
+		items.push({
+			label: 'Agromart',
+			icon: markRaw(Wrench),
+			href: '/app/agro-dashboard',
+			match: ['agro-dashboard'],
+		})
+	}
+
+	// 5. Enquiries
+	if (
+		isSys ||
+		roles.some((r) =>
+			['Agro User', 'Agro user', 'Agriculture Manager', 'Agriculture User'].includes(r)
+		)
+	) {
+		items.push({
+			label: 'Enquiries',
+			icon: markRaw(CheckSquare),
+			href: '/app/kpg-enquiry',
+			match: ['kpg-enquiry', 'kpg enquiry'],
+		})
+	}
+
+	// 6. Accounting
+	if (isSys || roles.includes('Accounts Manager') || roles.includes('Accounts User')) {
+		items.push({
+			label: 'Accounting',
+			icon: markRaw(Database),
+			href: '/app/accounting',
+			match: ['accounting'],
+		})
+	}
+
+	// 7. HR
+	if (isSys || roles.includes('HR Manager') || roles.includes('HR User')) {
+		items.push({
+			label: 'HR',
+			icon: markRaw(Building2),
+			href: '/app/hr',
+			match: ['hr'],
+		})
+	}
+
+	// 8. LMS item included per user requirement
+	items.push({
+		label: 'LMS',
+		icon: markRaw(BookOpen),
+		href: '/lms',
+		match: ['lms'],
+	})
+
+	// 9. Support
+	if (
+		isSys ||
+		roles.includes('Support Team') ||
+		roles.includes('Support User') ||
+		roles.includes('Customer')
+	) {
+		items.push({
+			label: 'Support',
+			icon: markRaw(MessageSquare),
+			href: '/app/support',
+			match: ['support'],
+		})
+	}
+
+	return items
+})
+
+function handleNavClick(item) {
+	if (item.href === '/lms') {
+		// Already in LMS, navigate to home/root of LMS
+		if (router.currentRoute.value.name !== 'Home') {
+			router.push({ name: 'Home' })
+		}
+		return
+	}
+	if (item.href.startsWith('http')) {
+		openExternal(item.href)
+		return
+	}
+	window.location.href = item.href
+}
+
+const deskUrl = computed(() => {
+	return userResource.data?.desk_url || null
+})
+
 onMounted(() => {
 	setUpOnboarding()
 	addKeyboardShortcut()
 	updateSidebarLinks()
 	loadUnreadCount()
-	socket.on('publish_lms_notifications', () => {
-		unreadNotifications.reload()
-	})
+	if (socket) {
+		socket.on('publish_lms_notifications', () => {
+			unreadNotifications.reload()
+		})
+	}
 })
 
-// The count lives in stores/notifications now, so the badge follows it rather
-// than being written from the resource's onSuccess.
 watch(unreadCount, () => updateUnreadCount())
 
 const updateSidebarLinksVisibility = () => {
@@ -393,7 +725,7 @@ const updateSidebarLinksVisibility = () => {
 		if (!data) return
 		Object.keys(data).forEach((key) => {
 			if (!parseInt(data[key])) {
-				sidebarLinks.value.forEach((link) => {
+				sidebarLinks.value?.forEach((link) => {
 					link.items = link.items.filter(
 						(item) => item.label.toLowerCase().split(' ').join('_') !== key
 					)
@@ -717,22 +1049,6 @@ const isStudent = computed(() => {
 	return userResource.data?.is_student
 })
 
-// Gated by get_user_info (lms/lms/api.py): desk_url is the user's real Desk
-// home (kpg-dashboard when permitted, else their own home, else absent).
-// Guests get nothing so the link never shows; a hardcoded /app/kpg-dashboard
-// 403s for users without Page permission (verified 2026-10-16).
-const canShowDesk = computed(() => {
-	return Boolean(userResource.data?.can_access_desk && userResource.data?.desk_url)
-})
-
-const deskUrl = computed(() => {
-	return userResource.data?.desk_url || null
-})
-
-const goDesk = () => {
-	if (deskUrl.value) window.location.href = deskUrl.value
-}
-
 const profileIsComplete = computed(() => {
 	return (
 		userResource.data?.user_image &&
@@ -742,7 +1058,9 @@ const profileIsComplete = computed(() => {
 })
 
 onUnmounted(() => {
-	socket.off('publish_lms_notifications')
+	if (socket) {
+		socket.off('publish_lms_notifications')
+	}
 	window.removeEventListener('keydown', onKeyboardShortcut)
 })
 </script>

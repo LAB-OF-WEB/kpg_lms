@@ -285,55 +285,548 @@
 	margin-bottom: 2px;
 }
 
-/* ---------- Topbar (desktop + mobile unified) ---------- */
+/* Switch between KPG rail and original LMS sidebar */
+.kpg-lms-toggle-view {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 6px 10px 10px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	font-size: 12px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.9);
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	width: calc(100% - 20px);
+	text-align: left;
+}
+
+.kpg-lms-toggle-view:hover {
+	background: rgba(255, 255, 255, 0.2);
+	color: #fff;
+}
+
+.kpg-lms-toggle-view svg,
+.kpg-lms-toggle-view .lucide {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}
+
+/* ---------- KPG Nav Items in LMS Rail ---------- */
+.kpg-nav {
+	list-style: none;
+	padding: 0 4px;
+	margin: 0;
+	flex: 1 1 auto;
+}
+
+.kpg-nav-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 9px 14px;
+	margin: 4px 8px;
+	border-radius: 10px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.3;
+	color: rgba(255, 255, 255, 0.92);
+	letter-spacing: 0.2px;
+	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+	position: relative;
+	user-select: none;
+}
+
+.kpg-nav-item .kpg-nav-icon {
+	width: 28px;
+	height: 28px;
+	flex: 0 0 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.08);
+	color: rgba(255, 255, 255, 0.85);
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+.kpg-nav-item .kpg-nav-label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kpg-nav-item:hover {
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+	transform: translateX(2px);
+}
+
+.kpg-nav-item:hover .kpg-nav-icon {
+	background: rgba(255, 255, 255, 0.2);
+	color: #fff;
+}
+
+.kpg-nav-item.active {
+	background: linear-gradient(90deg, rgba(235, 0, 139, 0.35) 0%, rgba(255, 255, 255, 0.16) 100%);
+	color: #ffffff;
+	font-weight: 600;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.kpg-nav-item.active::before {
+	content: "";
+	position: absolute;
+	left: -8px;
+	top: 8px;
+	bottom: 8px;
+	width: 4px;
+	background: #ff3399;
+	border-radius: 0 4px 4px 0;
+	box-shadow: 0 0 8px rgba(255, 51, 153, 0.7);
+}
+
+.kpg-nav-item.active .kpg-nav-icon {
+	background: #eb008b;
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(235, 0, 139, 0.5);
+}
+
+.kpg-lms-collapsed .kpg-nav-item {
+	margin: 4px 4px;
+	padding: 9px 0;
+	justify-content: center;
+}
+
+.kpg-lms-collapsed .kpg-nav-item.active::before {
+	left: -4px;
+}
+
+.kpg-lms-collapsed .kpg-lms-logo {
+	padding: 0 4px;
+}
+
+.kpg-lms-collapsed .kpg-lms-logo img {
+	max-width: 44px;
+	height: 36px;
+}
+
+/* ---------- Topbar (desktop + mobile unified, 1:1 with kpg_shell.js) ---------- */
 .kpg-lms-topbar {
 	display: flex;
 	align-items: center;
-	gap: 10px;
 	height: 54px;
-	padding: 0 12px 0 10px;
-	background: var(--kpg-surface);
-	border-bottom: 1px solid #edf2f7;
+	padding: 0 16px 0 12px;
+	background: #ffffff;
+	border-bottom: 1px solid #e8edf3;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 	flex-shrink: 0;
 	min-width: 0;
+	position: sticky;
+	top: 0;
+	z-index: 100;
 }
 
-.kpg-lms-topbar-search {
-	flex: 1 0 120px;
+/* 1. Rail handle button (matches .kpg-rail-handle in Desk 1:1) */
+.kpg-rail-handle-btn {
+	width: 28px;
+	height: 28px;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	background: #ffffff;
+	color: var(--kpg-ink-2, #334155);
+	font-size: 13px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+	transition: background 0.15s, border-color 0.15s, transform 0.15s, color 0.15s;
+	margin-right: 12px;
+	flex-shrink: 0;
+}
+
+.kpg-rail-handle-btn:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+	color: var(--kpg-brand, #8a0b4d);
+	transform: scale(1.05);
+}
+
+/* 2. Search bar container + icon + input (matches Desk .search-bar 1:1) */
+.kpg-topbar-search-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100%;
 	max-width: 400px;
 	height: 35px;
-	margin: 0 auto 0 12px;
-	font-size: 13px;
-	color: var(--kpg-ink-2, #334155);
+	margin-right: auto;
+}
+
+.kpg-topbar-search-icon {
+	position: absolute;
+	left: 12px;
+	display: flex;
+	align-items: center;
+	pointer-events: none;
+	color: #94a3b8;
+	z-index: 2;
+}
+
+.kpg-topbar-search-icon svg {
+	width: 14px;
+	height: 14px;
+	stroke: #94a3b8;
+}
+
+.kpg-topbar-search-input {
+	width: 100% !important;
+	height: 35px;
 	background: #f8fafc;
 	border: 1px solid #e2e8f0;
 	border-radius: 8px;
-	padding: 0 12px 0 36px;
+	padding: 0 12px 0 36px !important;
+	margin: 0;
+	font-size: 13px;
+	color: var(--kpg-ink-2, #334155);
+	line-height: 35px;
 	outline: none;
 	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
 	cursor: pointer;
 }
 
-.kpg-lms-topbar-search:focus {
+.kpg-topbar-search-input:hover {
+	border-color: #cbd5e1;
 	background: #ffffff;
-	border-color: var(--kpg-brand, #8a0b4d);
-	box-shadow: 0 0 0 3px rgba(138, 11, 77, 0.08), inset 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
-.kpg-lms-topbar-title {
-	font-size: 15px;
-	font-weight: 600;
-	color: var(--kpg-ink);
-	margin-left: auto;
+.kpg-topbar-search-input:focus,
+.kpg-topbar-search-input.kpg-search-focused {
+	background: #ffffff;
+	border-color: var(--kpg-brand, #8a0b4d) !important;
+	box-shadow: 0 0 0 2px rgba(138, 11, 77, 0.08), inset 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.kpg-topbar-search-input::placeholder {
+	color: #94a3b8;
+	font-size: 12.5px;
+	font-weight: 400;
+}
+
+/* CRM Search dropdown (matches Desk awesomplete 1:1) */
+.kpg-search-dropdown {
+	position: absolute;
+	top: calc(100% + 2px);
+	left: 0;
+	width: 100%;
+	min-width: 280px;
+	max-width: 440px;
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+	padding: 4px;
+	margin: 0;
+	list-style: none;
+	max-height: 340px;
+	overflow-y: auto;
+	z-index: 1050;
+}
+
+.kpg-search-item {
+	padding: 7px 12px;
+	border-radius: 6px;
+	font-size: 13px;
+	color: #334155;
+	cursor: pointer;
+	user-select: none;
+	transition: background 0.1s ease;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	display: block;
 }
 
-@media (max-width: 767px) {
-	.kpg-lms-topbar-title { display: none; }
-	.kpg-lms-topbar-search { display: none; }
+.kpg-search-item strong {
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.kpg-search-item:hover,
+.kpg-search-item.kpg-search-active {
+	background-color: #f1f5f9;
+	color: #0f172a;
+}
+
+/* 3. Right side group */
+.kpg-topbar-right {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+/* 4. Branch badge (matches Desk .kpg-branch-label 1:1) */
+.kpg-branch-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--kpg-ink-2, #334155);
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	padding: 4px 12px;
+	white-space: nowrap;
+	letter-spacing: 0.15px;
+	cursor: default;
+	transition: all 0.15s ease;
+	user-select: none;
+}
+
+.kpg-branch-label:hover {
+	background: #e2e8f0;
+	border-color: #cbd5e1;
+}
+
+.kpg-branch-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #10b981;
+	display: inline-block;
+	box-shadow: 0 0 5px rgba(16, 185, 129, 0.6);
+	flex-shrink: 0;
+}
+
+/* 5. Notification bell button */
+.kpg-topbar-btn {
+	position: relative;
+	width: 32px;
+	height: 32px;
+	border-radius: 6px;
+	border: 1px solid transparent;
+	background: transparent;
+	color: #64748b;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	padding: 0;
+}
+
+.kpg-topbar-btn:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+	border-color: #e2e8f0;
+}
+
+.kpg-unread-dot {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #eb008b;
+	box-shadow: 0 0 4px rgba(235, 0, 139, 0.8);
+	border: 1px solid #ffffff;
+}
+
+/* 6. Vertical divider */
+.kpg-topbar-divider {
+	width: 1px;
+	height: 20px;
+	background: #e2e8f0;
+	margin: 0 2px;
+	flex-shrink: 0;
+}
+
+/* 7. Help trigger (Matches CRM Desk 1:1) */
+.kpg-topbar-help {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 6px;
+	border-radius: 6px;
+	border: 1px solid transparent;
+	background: transparent;
+	color: #64748b;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	outline: none;
+}
+
+.kpg-topbar-help:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+}
+
+.kpg-topbar-help[data-state='open'] {
+	background: transparent !important;
+	color: #0f172a !important;
+	border-color: transparent !important;
+}
+
+/* 8. User avatar trigger (Matches CRM Desk 1:1) */
+.kpg-topbar-avatar {
+	height: 32px;
+	padding: 2px 6px;
+	border-radius: 6px;
+	border: 1px solid transparent;
+	background: transparent;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	flex-shrink: 0;
+	transition: all 0.15s ease;
+	outline: none;
+}
+
+.kpg-topbar-avatar:hover {
+	border-color: #cbd5e1;
+	background: #f8fafc;
+}
+
+.kpg-topbar-avatar[data-state='open'],
+.kpg-topbar-avatar:focus-visible {
+	border: 1px solid #1e293b !important;
+	background: #ffffff !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+
+.kpg-topbar-avatar .kpg-avatar-circle {
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1;
+}
+
+/* 9. Dropdown Menu Styling (Matches CRM Desk 1:1) */
+.menu-content,
+[data-slot='content'].menu-content {
+	background-color: #ffffff !important;
+	border: 1px solid #e2e8f0 !important;
+	border-radius: 8px !important;
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+	padding: 4px !important;
+	min-width: 185px !important;
+	max-width: 220px !important;
+	outline: none !important;
+	font-family: inherit !important;
+}
+
+/* Remove default extra group padding */
+.menu-content [data-slot='group'] {
+	padding: 0 !important;
+}
+
+/* Divider between groups matching CRM */
+.menu-content.divide-y > :not([hidden]) ~ :not([hidden]) {
+	border-top: 1px solid #e2e8f0 !important;
+	margin: 4px 0 !important;
+	padding-top: 4px !important;
+}
+
+/* Dropdown item wrapper */
+.menu-content [data-slot='item'] {
+	padding: 0 !important;
+	margin: 1px 0 !important;
+	border-radius: 4px !important;
+	cursor: pointer !important;
+	outline: none !important;
+	background: transparent !important;
+	transition: background-color 0.1s ease !important;
+}
+
+/* Force compact item list row matching CRM: 28px height & 13px text */
+.menu-content [data-slot='item-list-row'] {
+	min-height: 28px !important;
+	height: 28px !important;
+	padding: 0 10px !important;
+	margin: 0 !important;
+	border-radius: 4px !important;
+	font-size: 13px !important;
+	line-height: 28px !important;
+	color: #334155 !important;
+	font-weight: 400 !important;
+	background-color: transparent !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+}
+
+.menu-content [data-slot='item-label'],
+.menu-content [data-slot='item-label'] * {
+	font-size: 13px !important;
+	line-height: 1.3 !important;
+	color: #334155 !important;
+	font-weight: 400 !important;
+}
+
+/* Hover and active states matching CRM */
+.menu-content [data-slot='item']:hover,
+.menu-content [data-slot='item']:focus,
+.menu-content [data-slot='item'][data-highlighted] {
+	background-color: #f1f5f9 !important;
+}
+
+.menu-content [data-slot='item']:hover [data-slot='item-label'] *,
+.menu-content [data-slot='item']:focus [data-slot='item-label'] *,
+.menu-content [data-slot='item'][data-highlighted] [data-slot='item-label'] * {
+	color: #0f172a !important;
+}
+
+@media (max-width: 900px) {
+	.kpg-branch-label {
+		display: none !important;
+	}
+	.kpg-topbar-help {
+		display: none !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.kpg-topbar-search-wrap {
+		flex: 1 1 auto;
+		max-width: 240px;
+		margin-right: 8px;
+	}
+	.kpg-topbar-search-input {
+		font-size: 12px;
+		padding: 0 8px 0 30px !important;
+	}
+	.kpg-topbar-search-icon {
+		left: 8px;
+	}
+	.kpg-search-dropdown {
+		position: absolute;
+		left: 0;
+		width: calc(100vw - 32px);
+		max-width: 320px;
+	}
 }
 
 /* ---------- Desktop main canvas ---------- */
@@ -358,17 +851,6 @@
 }
 
 /* ---------- Mobile: KPG drawer replaces the bottom tab bar ---------- */
-.kpg-lms-topbar {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	height: 54px;
-	padding: 0 12px 0 10px;
-	background: var(--kpg-surface);
-	border-bottom: 1px solid #edf2f7;
-	flex-shrink: 0;
-}
-
 .kpg-lms-toggle {
 	display: inline-flex;
 	width: 40px;

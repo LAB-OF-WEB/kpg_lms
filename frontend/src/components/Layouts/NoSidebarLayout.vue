@@ -10,27 +10,76 @@
 		<header class="kpg-lms-topbar">
 			<a
 				v-if="deskUrl"
-				:href="deskUrl"
-				class="kpg-lms-logo !h-9 !min-h-9 !w-auto !bg-transparent !border-0 !p-0"
+				:href="safeUrl(deskUrl)"
+				class="kpg-lms-logo !h-9 !min-h-9 !w-auto !bg-transparent !border-0 !p-0 mr-4"
 				:aria-label="__('Back to Desk')"
 			>
 				<img
-					:src="kpgLogo"
+					:src="safeUrl(brandLogo)"
 					alt="KPG"
 					class="!h-8"
 					onerror="this.outerHTML='<div class=\'kpg-lms-logo-fallback\'>KPG</div>';"
 				/>
 			</a>
-			<span class="kpg-lms-topbar-title">{{ __('Learning') }}</span>
-			<button
-				v-if="canShowDesk"
-				type="button"
-				class="kpg-lms-toggle"
-				:aria-label="__('Back to Desk')"
-				@click="goDesk"
-			>
-				<span class="lucide-arrow-left size-4" aria-hidden="true" />
-			</button>
+
+			<!-- CRM autocomplete search bar (matches Desk 1:1) -->
+			<LmsSearchBar />
+
+			<div class="kpg-topbar-right">
+				<span class="kpg-branch-label" :title="branchLabel">
+					<span class="kpg-branch-dot"></span>
+					<span class="kpg-branch-text">{{ branchLabel }}</span>
+				</span>
+
+				<button
+					type="button"
+					class="kpg-topbar-btn"
+					data-notifications-trigger
+					:aria-label="__('Notifications')"
+					:title="__('Notifications')"
+					@click="toggleNotifications"
+				>
+					<Bell class="h-4 w-4" aria-hidden="true" />
+					<span v-if="unreadCount > 0" class="kpg-unread-dot" aria-hidden="true" />
+				</button>
+
+				<div class="kpg-topbar-divider"></div>
+
+				<Dropdown :options="helpOptions" align="end" :offset="6">
+					<button
+						type="button"
+						class="kpg-topbar-help"
+						:aria-label="__('Help')"
+						:title="__('Help')"
+					>
+						<span>{{ __('Help') }}</span>
+						<ChevronDown class="h-3 w-3" aria-hidden="true" />
+					</button>
+				</Dropdown>
+
+				<Dropdown :options="userDropdownOptions" align="end" :offset="6">
+					<button
+						type="button"
+						class="kpg-topbar-avatar"
+						:aria-label="__('User menu')"
+						:title="userFullName"
+					>
+						<img
+							v-if="userImage"
+							:src="safeUrl(userImage)"
+							:alt="userFullName"
+							class="kpg-avatar-circle object-cover"
+						/>
+						<span
+							v-else
+							class="kpg-avatar-circle kpg-avatar-initial"
+							:style="avatarBadgeStyle"
+						>
+							{{ avatarLetter }}
+						</span>
+					</button>
+				</Dropdown>
+			</div>
 		</header>
 		<div class="h-full flex-1">
 			<div class="flex h-dvh text-base bg-surface-base">
@@ -50,33 +99,107 @@
 			:aria-label="__('Back to Desk')"
 			@click="goDesk"
 		>
-			<span class="lucide-arrow-left size-4" aria-hidden="true" />
+			<ArrowLeft class="size-4" aria-hidden="true" />
 			{{ __('Back to Desk') }}
 		</button>
 	</div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { getActivePinia } from 'pinia'
+import { useRouter } from 'vue-router'
+import { Dropdown } from 'frappe-ui'
+import {
+	Bell,
+	ChevronDown,
+	ArrowLeft,
+} from 'lucide-vue-next'
 import { skipToContent } from '@/utils/a11y'
+import { safeUrl } from '@/utils/safeUrl'
+import LmsSearchBar from '@/components/Controls/LmsSearchBar.vue'
+import { useSettings } from '@/stores/settings'
 import { usersStore } from '@/stores/user'
+import { sessionStore } from '@/stores/session'
+import {
+	getHelpOptions,
+	getUserDropdownOptions,
+	getUserAvatarLetter,
+	getUserAvatarStyle,
+} from '@/utils/topbarDropdowns'
+import {
+	unreadCount,
+	toggleNotifications,
+	loadUnreadCount,
+} from '@/stores/notifications'
 
-const { userResource } = usersStore()
+const router = useRouter()
+const settingsStore = getActivePinia() ? useSettings() : null
+const userStore = getActivePinia() ? usersStore() : null
+const sessStore = getActivePinia() ? sessionStore() : null
 
-const kpgLogo = '/assets/kpg_crm/images/kpg.jpeg'
+const userResource = computed(() => (userStore?.userResource || { data: null }) as any)
+
+onMounted(() => {
+	if (getActivePinia()) {
+		loadUnreadCount()
+	}
+})
+
+const brandLogo = computed(() => {
+	return (
+		sessStore?.branding?.data?.banner_image?.file_url ||
+		sessStore?.branding?.data?.app_logo ||
+		'/assets/kpg_crm/images/kpg.jpeg'
+	)
+})
 
 const canShowDesk = computed(() =>
 	Boolean(
-		(userResource.data as any)?.can_access_desk &&
-			(userResource.data as any)?.desk_url
+		userResource.value?.data?.can_access_desk &&
+			userResource.value?.data?.desk_url
 	)
 )
 
 const deskUrl = computed(() => {
-	return (userResource.data as any)?.desk_url || null
+	return userResource.value?.data?.desk_url || null
+})
+
+const branchLabel = computed(() => {
+	try {
+		const label = sessionStorage.getItem('kpg_branch_label')
+		return label === 'All' ? 'All Branches' : (label || 'All Branches')
+	} catch {
+		return 'All Branches'
+	}
+})
+
+const userFullName = computed(() => {
+	const data = userResource.value?.data
+	return data?.full_name || data?.name || 'User'
+})
+
+const userImage = computed(() => {
+	return userResource.value?.data?.user_image || null
+})
+
+const avatarLetter = computed(() => {
+	return getUserAvatarLetter(userResource.value?.data)
+})
+
+const avatarBadgeStyle = computed(() => {
+	return getUserAvatarStyle(userResource.value?.data)
 })
 
 const goDesk = () => {
-	const url = (userResource.data as any)?.desk_url
+	const url = userResource.value?.data?.desk_url
 	if (url) window.location.href = url
 }
+
+const userDropdownOptions = computed(() => {
+	return getUserDropdownOptions(userResource.value?.data, sessStore)
+})
+
+const helpOptions = computed(() => {
+	return getHelpOptions(settingsStore)
+})
 </script>
