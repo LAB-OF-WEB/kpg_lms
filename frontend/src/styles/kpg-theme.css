@@ -10,9 +10,28 @@
 	--kpg-surface: #ffffff;
 	--kpg-canvas: #f8fafc;
 	--kpg-border: #e8edf3;
+	/* The slate-200 hairline the chrome's own controls used before this file
+	   had tokens. Kept apart from --kpg-border (which was #e8edf3, not this) so
+	   the topbar/search/menu borders stay pixel-identical to Desk's. */
+	--kpg-border-2: #e2e8f0;
 	--kpg-ink: #0f172a;
 	--kpg-ink-2: #334155;
 	--kpg-muted: #64748b;
+	/* Neutrals the KPG chrome borrows. Kept as their own names, not the
+	   frappe-ui tokens, so the light values stay exactly the ones the client
+	   signed off on while [data-theme='dark'] below can re-point them. */
+	--kpg-chip: #f1f5f9;
+	--kpg-chip-strong: #e2e8f0;
+	--kpg-field: #f8fafc;
+	--kpg-hover: #f8fafc;
+	--kpg-border-strong: #cbd5e1;
+	--kpg-placeholder: #94a3b8;
+	--kpg-ring: rgba(138, 11, 77, 0.08);
+	--kpg-ring-strong: #1e293b;
+	/* Magenta for ink or borders that sit ON a surface (hover states, focus
+	   borders). Not --kpg-brand: that one also fills the Back pill, where it
+	   must stay dark so its white label keeps its contrast. */
+	--kpg-accent: #8a0b4d;
 	--kpg-s4: 10px;
 	--kpg-s6: 14px;
 	--kpg-r1: 6px;
@@ -20,9 +39,46 @@
 	--kpg-r3: 10px;
 	--kpg-r4: 12px;
 	--kpg-sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+	--kpg-sh-btn: 0 1px 3px rgba(15, 23, 42, 0.08);
 	--kpg-sh-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
 	--kpg-sh-md: 0 6px 16px -8px rgba(15, 23, 42, 0.25);
+	--kpg-sh-lg: 0 6px 20px rgba(15, 23, 42, 0.12);
+	--kpg-sh-menu: 0 4px 16px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
+	--kpg-sh-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 	--kpg-rail-w: 210px;
+}
+
+/* Dark mode. Before this block the KPG layer hard-coded light surfaces while
+   frappe-ui flipped --ink-* to near-white, so a dark user got light text on a
+   white canvas — the whole page read as blank (client report 2026-10-17). Each
+   KPG neutral is now re-pointed at frappe-ui's own dark tokens rather than a
+   hand-picked hex, so the two stay in step. The magenta rail, logo band and
+   Back pill are deliberately untouched: they are brand surfaces that read the
+   same on both themes, and their labels are white. */
+[data-theme='dark'] {
+	--kpg-surface: var(--surface-gray-1);
+	--kpg-canvas: var(--surface-base);
+	--kpg-border: var(--outline-gray-2);
+	--kpg-border-2: var(--outline-gray-2);
+	--kpg-ink: var(--ink-gray-9);
+	--kpg-ink-2: var(--ink-gray-7);
+	--kpg-muted: var(--ink-gray-5);
+	--kpg-chip: var(--surface-gray-2);
+	--kpg-chip-strong: var(--surface-gray-3);
+	--kpg-field: var(--surface-gray-2);
+	--kpg-hover: var(--surface-gray-2);
+	--kpg-border-strong: var(--outline-gray-3);
+	--kpg-placeholder: var(--ink-gray-5);
+	--kpg-ring: rgba(235, 0, 139, 0.24);
+	--kpg-ring-strong: var(--ink-gray-7);
+	--kpg-accent: #ff3399;
+	--kpg-sh-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+	--kpg-sh-btn: 0 1px 3px rgba(0, 0, 0, 0.5);
+	--kpg-sh-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+	--kpg-sh-md: 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+	--kpg-sh-lg: 0 6px 20px rgba(0, 0, 0, 0.6);
+	--kpg-sh-menu: 0 4px 16px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.5);
+	--kpg-sh-panel: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 }
 
 /* ---------- Sidebar shell (desktop + mobile drawer share this) ---------- */
@@ -425,9 +481,9 @@
 	align-items: center;
 	height: 54px;
 	padding: 0 16px 0 12px;
-	background: #ffffff;
-	border-bottom: 1px solid #e8edf3;
-	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+	background: var(--kpg-surface);
+	border-bottom: 1px solid var(--kpg-border);
+	box-shadow: var(--kpg-sh-xs);
 	flex-shrink: 0;
 	min-width: 0;
 	position: sticky;
@@ -439,25 +495,25 @@
 .kpg-rail-handle-btn {
 	width: 28px;
 	height: 28px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid var(--kpg-border-2);
 	border-radius: 6px;
-	background: #ffffff;
-	color: var(--kpg-ink-2, #334155);
+	background: var(--kpg-surface);
+	color: var(--kpg-ink-2);
 	font-size: 13px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
-	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+	box-shadow: var(--kpg-sh-btn);
 	transition: background 0.15s, border-color 0.15s, transform 0.15s, color 0.15s;
 	margin-right: 12px;
 	flex-shrink: 0;
 }
 
 .kpg-rail-handle-btn:hover {
-	background: #f8fafc;
-	border-color: #cbd5e1;
-	color: var(--kpg-brand, #8a0b4d);
+	background: var(--kpg-hover);
+	border-color: var(--kpg-border-strong);
+	color: var(--kpg-accent);
 	transform: scale(1.05);
 }
 
@@ -478,26 +534,26 @@
 	display: flex;
 	align-items: center;
 	pointer-events: none;
-	color: #94a3b8;
+	color: var(--kpg-placeholder);
 	z-index: 2;
 }
 
 .kpg-topbar-search-icon svg {
 	width: 14px;
 	height: 14px;
-	stroke: #94a3b8;
+	stroke: var(--kpg-placeholder);
 }
 
 .kpg-topbar-search-input {
 	width: 100% !important;
 	height: 35px;
-	background: #f8fafc;
-	border: 1px solid #e2e8f0;
+	background: var(--kpg-field);
+	border: 1px solid var(--kpg-border-2);
 	border-radius: 8px;
 	padding: 0 12px 0 36px !important;
 	margin: 0;
 	font-size: 13px;
-	color: var(--kpg-ink-2, #334155);
+	color: var(--kpg-ink-2);
 	line-height: 35px;
 	outline: none;
 	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -506,19 +562,19 @@
 }
 
 .kpg-topbar-search-input:hover {
-	border-color: #cbd5e1;
-	background: #ffffff;
+	border-color: var(--kpg-border-strong);
+	background: var(--kpg-surface);
 }
 
 .kpg-topbar-search-input:focus,
 .kpg-topbar-search-input.kpg-search-focused {
-	background: #ffffff;
-	border-color: var(--kpg-brand, #8a0b4d) !important;
-	box-shadow: 0 0 0 2px rgba(138, 11, 77, 0.08), inset 0 1px 2px rgba(15, 23, 42, 0.02);
+	background: var(--kpg-surface);
+	border-color: var(--kpg-accent) !important;
+	box-shadow: 0 0 0 2px var(--kpg-ring), inset 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
 .kpg-topbar-search-input::placeholder {
-	color: #94a3b8;
+	color: var(--kpg-placeholder);
 	font-size: 12.5px;
 	font-weight: 400;
 }
@@ -531,10 +587,10 @@
 	width: 100%;
 	min-width: 280px;
 	max-width: 440px;
-	background: #ffffff;
-	border: 1px solid #e2e8f0;
+	background: var(--kpg-surface);
+	border: 1px solid var(--kpg-border-2);
 	border-radius: 8px;
-	box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+	box-shadow: var(--kpg-sh-lg);
 	padding: 4px;
 	margin: 0;
 	list-style: none;
@@ -547,7 +603,7 @@
 	padding: 7px 12px;
 	border-radius: 6px;
 	font-size: 13px;
-	color: #334155;
+	color: var(--kpg-ink-2);
 	cursor: pointer;
 	user-select: none;
 	transition: background 0.1s ease;
@@ -559,13 +615,13 @@
 
 .kpg-search-item strong {
 	font-weight: 700;
-	color: #0f172a;
+	color: var(--kpg-ink);
 }
 
 .kpg-search-item:hover,
 .kpg-search-item.kpg-search-active {
-	background-color: #f1f5f9;
-	color: #0f172a;
+	background-color: var(--kpg-chip);
+	color: var(--kpg-ink);
 }
 
 /* 3. Right side group */
@@ -584,9 +640,9 @@
 	gap: 7px;
 	font-size: 12px;
 	font-weight: 600;
-	color: var(--kpg-ink-2, #334155);
-	background: #f1f5f9;
-	border: 1px solid #e2e8f0;
+	color: var(--kpg-ink-2);
+	background: var(--kpg-chip);
+	border: 1px solid var(--kpg-border-2);
 	border-radius: 16px;
 	padding: 4px 12px;
 	white-space: nowrap;
@@ -597,8 +653,8 @@
 }
 
 .kpg-branch-label:hover {
-	background: #e2e8f0;
-	border-color: #cbd5e1;
+	background: var(--kpg-chip-strong);
+	border-color: var(--kpg-border-strong);
 }
 
 .kpg-branch-dot {
@@ -619,7 +675,7 @@
 	border-radius: 6px;
 	border: 1px solid transparent;
 	background: transparent;
-	color: #64748b;
+	color: var(--kpg-muted);
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -629,9 +685,9 @@
 }
 
 .kpg-topbar-btn:hover {
-	background: #f1f5f9;
-	color: #0f172a;
-	border-color: #e2e8f0;
+	background: var(--kpg-chip);
+	color: var(--kpg-ink);
+	border-color: var(--kpg-border-2);
 }
 
 .kpg-unread-dot {
@@ -643,14 +699,14 @@
 	border-radius: 50%;
 	background: #eb008b;
 	box-shadow: 0 0 4px rgba(235, 0, 139, 0.8);
-	border: 1px solid #ffffff;
+	border: 1px solid var(--kpg-surface);
 }
 
 /* 6. Vertical divider */
 .kpg-topbar-divider {
 	width: 1px;
 	height: 20px;
-	background: #e2e8f0;
+	background: var(--kpg-border-2);
 	margin: 0 2px;
 	flex-shrink: 0;
 }
@@ -664,7 +720,7 @@
 	border-radius: 6px;
 	border: 1px solid transparent;
 	background: transparent;
-	color: #64748b;
+	color: var(--kpg-muted);
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
@@ -673,13 +729,13 @@
 }
 
 .kpg-topbar-help:hover {
-	background: #f1f5f9;
-	color: #0f172a;
+	background: var(--kpg-chip);
+	color: var(--kpg-ink);
 }
 
 .kpg-topbar-help[data-state='open'] {
 	background: transparent !important;
-	color: #0f172a !important;
+	color: var(--kpg-ink) !important;
 	border-color: transparent !important;
 }
 
@@ -700,14 +756,14 @@
 }
 
 .kpg-topbar-avatar:hover {
-	border-color: #cbd5e1;
-	background: #f8fafc;
+	border-color: var(--kpg-border-strong);
+	background: var(--kpg-hover);
 }
 
 .kpg-topbar-avatar[data-state='open'],
 .kpg-topbar-avatar:focus-visible {
-	border: 1px solid #1e293b !important;
-	background: #ffffff !important;
+	border: 1px solid var(--kpg-ring-strong) !important;
+	background: var(--kpg-surface) !important;
 	box-shadow: none !important;
 	outline: none !important;
 }
@@ -727,10 +783,10 @@
 /* 9. Dropdown Menu Styling (Matches CRM Desk 1:1) */
 .menu-content,
 [data-slot='content'].menu-content {
-	background-color: #ffffff !important;
-	border: 1px solid #e2e8f0 !important;
+	background-color: var(--kpg-surface) !important;
+	border: 1px solid var(--kpg-border-2) !important;
 	border-radius: 8px !important;
-	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+	box-shadow: var(--kpg-sh-menu) !important;
 	padding: 4px !important;
 	min-width: 185px !important;
 	max-width: 220px !important;
@@ -745,7 +801,7 @@
 
 /* Divider between groups matching CRM */
 .menu-content.divide-y > :not([hidden]) ~ :not([hidden]) {
-	border-top: 1px solid #e2e8f0 !important;
+	border-top: 1px solid var(--kpg-border-2) !important;
 	margin: 4px 0 !important;
 	padding-top: 4px !important;
 }
@@ -770,7 +826,7 @@
 	border-radius: 4px !important;
 	font-size: 13px !important;
 	line-height: 28px !important;
-	color: #334155 !important;
+	color: var(--kpg-ink-2) !important;
 	font-weight: 400 !important;
 	background-color: transparent !important;
 	display: flex !important;
@@ -782,7 +838,7 @@
 .menu-content [data-slot='item-label'] * {
 	font-size: 13px !important;
 	line-height: 1.3 !important;
-	color: #334155 !important;
+	color: var(--kpg-ink-2) !important;
 	font-weight: 400 !important;
 }
 
@@ -790,13 +846,13 @@
 .menu-content [data-slot='item']:hover,
 .menu-content [data-slot='item']:focus,
 .menu-content [data-slot='item'][data-highlighted] {
-	background-color: #f1f5f9 !important;
+	background-color: var(--kpg-chip) !important;
 }
 
 .menu-content [data-slot='item']:hover [data-slot='item-label'] *,
 .menu-content [data-slot='item']:focus [data-slot='item-label'] *,
 .menu-content [data-slot='item'][data-highlighted] [data-slot='item-label'] * {
-	color: #0f172a !important;
+	color: var(--kpg-ink) !important;
 }
 
 @media (max-width: 900px) {

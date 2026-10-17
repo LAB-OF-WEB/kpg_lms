@@ -25,9 +25,13 @@ const storedPreference = (): ThemePreference => {
 	}
 	// No preference key yet: inherit whatever the old single-key setup resolved
 	// to, so an existing user's choice survives the upgrade rather than snapping
-	// to system on first load after deploy.
+	// to system on first load after deploy. With nothing stored at all, start on
+	// Light — the default Desk ships (User.desk_theme, frappe/www/app.py:66) — so
+	// a light-themed bench does not open the LMS dark merely because the OS is.
+	// 'system' is still reachable: the Colour mode picker offers it (see
+	// COLOUR_MODES in components/Settings/mobileSettings.ts).
 	const legacy = localStorage.getItem(RESOLVED_KEY)
-	return legacy === 'dark' || legacy === 'light' ? legacy : 'system'
+	return legacy === 'dark' || legacy === 'light' ? legacy : 'light'
 }
 
 const resolve = (preference: ThemePreference): Theme =>

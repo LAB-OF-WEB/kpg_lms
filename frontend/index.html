@@ -22,9 +22,12 @@
 					preference !== 'dark' &&
 					preference !== 'system'
 				) {
+					/* Falling back to 'light', not 'system': Light is the default
+					   Desk ships, so an untouched LMS on a light bench must not open
+					   dark just because the OS is. */
 					var legacy = localStorage.getItem('theme')
 					preference =
-						legacy === 'dark' || legacy === 'light' ? legacy : 'system'
+						legacy === 'dark' || legacy === 'light' ? legacy : 'light'
 				}
 				document.documentElement.setAttribute(
 					'data-theme',

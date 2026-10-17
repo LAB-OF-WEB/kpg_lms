@@ -13,6 +13,10 @@ import colors from '../../node_modules/frappe-ui/tailwind/generated/colors.json'
 // roughly 300ms after first paint (1.1s at 6x CPU throttle). Every cold load in
 // dark mode therefore opened on a full-screen white flash.
 //
+// The default is Light (Desk parity), so this only bites a user who chose dark:
+// the bootstrap still has to resolve that stored choice before the paint, which
+// is why the rules below stay duplicated in index.html.
+//
 // A test asserting that index.html contains a theme script would pass against a
 // script that resolves the wrong value, or one placed after the stylesheet. So
 // this suite runs the real bootstrap and then resolves the colour the document
@@ -135,11 +139,13 @@ describe('the theme applied before first paint', () => {
 		expect(paintedDocument(null)).toBe('#ffffff')
 	})
 
-	it('paints the canvas dark for a dark visitor with no stored preference', () => {
+	it('starts light for a dark visitor with no stored preference', () => {
+		// Desk parity: User.desk_theme defaults to Light, so an untouched LMS
+		// must not open dark while the Desk beside it is light.
 		const theme = runBootstrap({ stored: {}, systemDark: true })
 
-		expect(theme).toBe('dark')
-		expect(paintedDocument(theme)).toBe('#171717')
+		expect(theme).toBe('light')
+		expect(paintedDocument(theme)).toBe('#ffffff')
 	})
 
 	it('honours an explicit dark choice made on a light system', () => {

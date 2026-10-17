@@ -418,8 +418,10 @@ let sharedPdfWorker = null
 	justify-content: space-between;
 	gap: 8px;
 	padding: 6px 8px;
-	border-bottom: 1px solid var(--gray-200, #e5e7eb);
-	background: var(--white, #fff);
+	/* KPG tokens, not the static `--gray-*` palette: those have one value for
+	   both themes, so the bar stayed white in dark mode. */
+	border-bottom: 1px solid var(--kpg-border);
+	background: var(--kpg-surface);
 }
 .pdf-toolbar-group {
 	display: flex;
@@ -434,13 +436,13 @@ let sharedPdfWorker = null
 	min-width: 28px;
 	padding: 0 6px;
 	border-radius: 6px;
-	color: var(--gray-700, #374151);
+	color: var(--kpg-ink-2);
 	background: transparent;
 	cursor: pointer;
 	border: none;
 }
 .pdf-btn:hover:not(:disabled) {
-	background: var(--gray-100, #f3f4f6);
+	background: var(--kpg-chip);
 }
 .pdf-btn:disabled {
 	opacity: 0.4;
@@ -450,7 +452,7 @@ let sharedPdfWorker = null
 	min-width: 56px;
 	text-align: center;
 	font-size: 13px;
-	color: var(--gray-700, #374151);
+	color: var(--kpg-ink-2);
 	font-variant-numeric: tabular-nums;
 }
 .pdf-scroll {
