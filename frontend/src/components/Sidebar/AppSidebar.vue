@@ -531,7 +531,7 @@ const navItems = computed(() => {
 		items.push({
 			label: 'LMS',
 			icon: markRaw(BookOpen),
-			href: '/lms',
+			href: '/lms/courses',
 			match: ['lms'],
 		})
 		return items
@@ -664,7 +664,7 @@ const navItems = computed(() => {
 	items.push({
 		label: 'LMS',
 		icon: markRaw(BookOpen),
-		href: '/lms',
+		href: '/lms/courses',
 		match: ['lms'],
 	})
 
@@ -687,10 +687,11 @@ const navItems = computed(() => {
 })
 
 function handleNavClick(item) {
-	if (item.href === '/lms') {
-		// Already in LMS, navigate to home/root of LMS
-		if (router.currentRoute.value.name !== 'Home') {
-			router.push({ name: 'Home' })
+	if (item.href.startsWith('/lms')) {
+		// Already in LMS: navigate in-app to the Courses list, which is where
+		// the rail's LMS item points.
+		if (router.currentRoute.value.name !== 'Courses') {
+			router.push({ name: 'Courses' })
 		}
 		return
 	}
