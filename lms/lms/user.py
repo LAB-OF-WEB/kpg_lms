@@ -25,6 +25,17 @@ def add_lms_student_role(doc, method):
 	doc.append_roles("LMS Student")
 
 
+def update_certificate_member_name(doc, method=None):
+	if doc.full_name and doc.has_value_changed("full_name"):
+		frappe.db.set_value(
+			"LMS Certificate",
+			{"member": doc.name},
+			"member_name",
+			doc.full_name,
+			update_modified=False,
+		)
+
+
 @frappe.whitelist(allow_guest=True)  # nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
 def sign_up(email: str, full_name: str, verify_terms: bool, user_category: str):
 	if is_signup_disabled():

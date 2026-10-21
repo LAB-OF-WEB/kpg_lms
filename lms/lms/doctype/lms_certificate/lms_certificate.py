@@ -11,6 +11,23 @@ from frappe.utils.telemetry import capture
 
 
 class LMSCertificate(Document):
+	def load_from_db(self):
+		super().load_from_db()
+		self.sync_member_name()
+
+	def sync_member_name(self):
+		if self.member and self.name:
+			current_name = frappe.db.get_value("User", self.member, "full_name")
+			if current_name and self.member_name != current_name:
+				self.member_name = current_name
+				frappe.db.set_value(
+					"LMS Certificate",
+					self.name,
+					"member_name",
+					current_name,
+					update_modified=False,
+				)
+
 	def validate(self):
 		self.validate_criteria()
 		self.validate_duplicate_certificate()

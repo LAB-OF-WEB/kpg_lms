@@ -177,6 +177,7 @@ doc_events = {
 	"User": {
 		"validate": "lms.lms.user.validate_username_duplicates",
 		"before_insert": "lms.lms.user.add_lms_student_role",
+		"on_update": "lms.lms.user.update_certificate_member_name",
 	},
 }
 
